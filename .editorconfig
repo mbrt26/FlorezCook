@@ -1,0 +1,53 @@
+# [START editorconfig]
+# EditorConfig helps developers define and maintain consistent
+# coding styles between different editors and IDEs
+# https://editorconfig.org/
+
+
+root = true
+
+[*]
+# Set default charset
+charset = utf-8
+
+# Indentation style
+indent_style = space
+indent_size = 4
+
+# Line endings
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# File format
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# File extensions
+[*.{js,jsx,ts,tsx,json,css,scss,html,htm,xml,svg}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 88
+
+[Makefile]
+indent_style = tab
+
+[Dockerfile]
+indent_style = space
+indent_size = 4
+
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+[*.{ini,toml}]
+indent_style = space
+indent_size = 4
+# [END editorconfig]

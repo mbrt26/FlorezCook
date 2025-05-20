@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header">
+            <h4><i class="fas fa-box me-2"></i>Detalles del Producto</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Código:</strong> {{ producto.codigo }}</p>
+                    <p><strong>Referencia:</strong> {{ producto.referencia_de_producto }}</p>
+                    <p><strong>Gramaje (g):</strong> {{ producto.gramaje_g }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Grupo de Formulación:</strong> {{ producto.formulacion_grupo }}</p>
+                    <p><strong>Línea:</strong> {{ producto.categoria_linea }}</p>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('productos_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </a>
+                <div>
+                    <a href="{{ url_for('editar_producto', producto_id=producto.id) }}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <form action="{{ url_for('eliminar_producto', producto_id=producto.id) }}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Está seguro que desea eliminar este producto?')">
+                            <i class="fas fa-trash me-1"></i> Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

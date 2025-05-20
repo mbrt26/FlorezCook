@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Lista de Pedidos | FlorezCook{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header"><h4 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Pedidos</h4></div>
+    <div class="card-body">
+        {% if pedidos %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>NIT</th>
+                    <th>Estado</th>
+                    <th>Productos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos %}
+                <tr>
+                    <td>{{ p.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ p.nombre_cliente_ingresado or (p.cliente_asociado.nombre_comercial if p.cliente_asociado) }}</td>
+                    <td>{{ p.numero_identificacion_cliente_ingresado }}</td>
+                    <td>{{ p.estado_pedido_general }}</td>
+                    <td>
+                        <ul class="mb-0">
+                        {% for item in p.items %}
+                            <li>{{ item.producto_asociado.referencia_de_producto if item.producto_asociado else '' }} ({{ item.cantidad }})</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">No hay pedidos registrados.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

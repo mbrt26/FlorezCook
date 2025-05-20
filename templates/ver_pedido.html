@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice me-2"></i>Pedido #{{ pedido.id }}</h2>
+        <div>
+            <a href="{{ url_for('reporte_pedidos') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Volver al listado
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Información del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Fecha de creación:</strong> {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p><strong>Estado:</strong> 
+                        <span class="badge bg-{{ 'success' if pedido.estado_pedido_general == 'Entregado' else 'warning' if pedido.estado_pedido_general == 'En Proceso' else 'danger' if pedido.estado_pedido_general == 'Cancelado' else 'secondary' }}">
+                            {{ pedido.estado_pedido_general }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Información del Cliente</h5>
+                </div>
+                <div class="card-body">
+                    {% if pedido.cliente_asociado %}
+                        <p><strong>Nombre:</strong> {{ pedido.cliente_asociado.nombre_comercial }}</p>
+                        <p><strong>Razón Social:</strong> {{ pedido.cliente_asociado.razon_social }}</p>
+                        <p><strong>Identificación:</strong> {{ pedido.cliente_asociado.tipo_identificacion }} {{ pedido.cliente_asociado.numero_identificacion }}</p>
+                        <p><strong>Email:</strong> {{ pedido.cliente_asociado.email }}</p>
+                        <p><strong>Teléfono:</strong> {{ pedido.cliente_asociado.telefono }}</p>
+                    {% else %}
+                        <p><strong>Nombre:</strong> {{ pedido.nombre_cliente_ingresado or 'N/A' }}</p>
+                        <p><strong>Identificación:</strong> {{ pedido.numero_identificacion_cliente_ingresado or 'N/A' }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Productos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Peso Unitario (g)</th>
+                            <th class="text-end">Peso Total (g)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in pedido.items %}
+                        <tr>
+                            <td>{{ item.producto_asociado.codigo }}</td>
+                            <td>{{ item.producto_asociado.referencia_de_producto }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(item.cantidad) }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(item.gramaje_g_item) }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(item.peso_total_g_item) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No hay productos en este pedido</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-secondary">
+                            <th colspan="3" class="text-end">Total:</th>
+                            <th class="text-end">{{ "%0.2f"|format(pedido.items|sum(attribute='gramaje_g_item')) }} g</th>
+                            <th class="text-end">{{ "%0.2f"|format(pedido.items|sum(attribute='peso_total_g_item')) }} g</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Información de Despacho</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tipo de despacho:</strong> {{ pedido.despacho_tipo or 'No especificado' }}</p>
+                    {% if pedido.direccion_entrega %}
+                        <p><strong>Dirección de entrega:</strong> {{ pedido.direccion_entrega }}</p>
+                        <p><strong>Ciudad:</strong> {{ pedido.ciudad_entrega or 'No especificada' }}</p>
+                        <p><strong>Departamento:</strong> {{ pedido.departamento_entrega or 'No especificado' }}</p>
+                    {% endif %}
+                    {% if pedido.despacho_horario_atencion %}
+                        <p><strong>Horario de atención:</strong> {{ pedido.despacho_horario_atencion }}</p>
+                    {% endif %}
+                    {% if pedido.observaciones_despacho %}
+                        <p><strong>Observaciones:</strong> {{ pedido.observaciones_despacho }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Total productos:</strong> {{ pedido.items|length }}</p>
+                    <p><strong>Peso total:</strong> {{ "%0.2f"|format(pedido.items|sum(attribute='peso_total_g_item')) }} g</p>
+                    {% if pedido.alerta %}
+                        <div class="alert alert-warning mt-3">
+                            <strong>Alerta:</strong> {{ pedido.alerta }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

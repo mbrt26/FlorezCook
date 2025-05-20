@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if modo == 'editar' else 'Agregar' }} Cliente | FlorezCook{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="fas fa-user me-2"></i>{{ 'Editar' if modo == 'editar' else 'Agregar' }} Cliente</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <!-- Hidden fields for redirection and NIT -->
+            <input type="hidden" name="redirect_to" value="{{ redirect_to if redirect_to else '' }}">
+            <input type="hidden" name="nit" value="{{ nit_default if nit_default else '' }}">
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Nombre Comercial</label>
+                    <input type="text" class="form-control" name="nombre_comercial" value="{{ cliente.nombre_comercial if cliente else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Razón Social</label>
+                    <input type="text" class="form-control" name="razon_social" value="{{ cliente.razon_social if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Tipo de Identificación</label>
+                    <select class="form-select" name="tipo_identificacion" required>
+                        <option value="">Seleccione...</option>
+                        <option value="NIT" {{ 'selected' if cliente and cliente.tipo_identificacion == 'NIT' else '' }}>NIT</option>
+                        <option value="Cedula Ciudadania" {{ 'selected' if cliente and cliente.tipo_identificacion == 'Cedula Ciudadania' else '' }}>Cédula Ciudadanía</option>
+                        <option value="Cedula Extranjería" {{ 'selected' if cliente and cliente.tipo_identificacion == 'Cedula Extranjería' else '' }}>Cédula Extranjería</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Número de Identificación</label>
+                    <input type="text" class="form-control" name="numero_identificacion" value="{{ cliente.numero_identificacion if cliente else nit_default if nit_default else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{ cliente.email if cliente else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Teléfono</label>
+                    <input type="text" class="form-control" name="telefono" value="{{ cliente.telefono if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Dirección</label>
+                    <input type="text" class="form-control" name="direccion" value="{{ cliente.direccion if cliente else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Ciudad</label>
+                    <input type="text" class="form-control" name="ciudad" value="{{ cliente.ciudad if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Departamento</label>
+                    <input type="text" class="form-control" name="departamento" value="{{ cliente.departamento if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="text-end">
+                <a href="{{ url_for('clientes_list') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

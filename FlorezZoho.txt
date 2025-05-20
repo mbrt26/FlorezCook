@@ -1,0 +1,2108 @@
+form Base_de_datos_Producto
+{
+	displayname = "Base de datos Producto"
+	success message = "Los datos se han agregado correctamente!"
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Enviar"
+			)
+			reset
+			(
+   				type = reset
+   				displayname = "Restablecer"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Actualizar"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancelar"
+			)
+		}
+	}
+}
+
+list Base_de_datos_Producto_Report
+{
+	displayName = "Base de datos Producto Reporte"
+	show all rows from Base_de_datos_Producto    
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+form Clientes
+{
+	success message = "Los datos se han agregado correctamente!"
+	Section
+	(
+		type = section
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	must have Nombre_Cliente
+	(
+    	type = text
+		displayname = "Nombre Comercial"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Raz_n_Social
+	(
+    	type = text
+		displayname = "Razón Social"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Tipo_Identificaci_n
+	(
+		type = picklist
+		displayname = "Tipo Identificación"
+		maxchar = 100
+		values = {"NIT","Cedula Ciudadania","Cedula Extranjería"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have No_Identificacion_Clientes
+	(
+		type = number
+		displayname = "Numero Identificación "
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Email
+	(
+    	type = email
+		maxchar = 80
+	 	row = 1
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	must have Telefono
+	(
+    	type = phonenumber
+	 	row = 1
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	must have Direccion_Cliente
+	(
+    	type = address
+		displayname = "Direccion"
+     	capture_coordinates = true
+     	adjust_using_map = true
+     	address_line_1
+     	(
+	     	  type = address_line_1
+	     	  displayname = "Direccion"
+     	) 
+     	address_line_2
+     	(
+	     	  type = address_line_2
+	     	  displayname = "Address Line 2"
+	     	 visibility = false
+     	) 
+     	district_city
+     	(
+	     	  type = district_city
+	     	  displayname = "Ciudad"
+     	) 
+     	state_province
+     	(
+	     	  type = state_province
+	     	  displayname = "Departamento"
+     	) 
+     	postal_Code
+     	(
+	     	  type = postal_Code
+	     	  displayname = "Postal Code"
+	     	 visibility = false
+     	) 
+     	country
+     	(
+	     	  type = country
+	     	  displayname = "Country"
+	     	 visibility = false
+     	) 
+     	latitude
+     	(
+	     	  type = latitude
+	     	  displayname = "latitude"
+	     	 visibility = false
+     	) 
+     	longitude
+     	(
+	     	  type = longitude
+	     	  displayname = "longitude"
+	     	 visibility = false
+     	) 
+	 	row = 1
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Enviar"
+			)
+			reset
+			(
+   				type = reset
+   				displayname = "Restablecer"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Actualizar"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancelar"
+			)
+		}
+	}
+}
+list Clientes_Report
+{
+	displayName = "Clientes Reporte"
+	show all rows from Clientes    
+	(
+		Nombre_Cliente as "Nombre Comercial"
+		Raz_n_Social as "Razón Social"
+		No_Identificacion_Clientes as "Numero Identificación "
+		Tipo_Identificaci_n as "Tipo Identificación"
+		Email
+		Telefono
+		(
+			displayformat = plainnumber 
+			linktodial = enable
+		)
+		Direccion_Cliente  as "Direccion"
+	 	(
+	      	displayformat = [address_line_1+""+address_line_2+""+district_city+""+state_province+""+postal_Code+""+country]
+	      	enable = Link_to_Map,Show_As_Text
+	 	)
+		Added_Time as "Hora agregado"
+	)
+	sort by
+	(
+		Added_Time descending
+	)
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Nombre_Cliente as "Nombre Comercial"
+					Raz_n_Social as "Razón Social"
+					No_Identificacion_Clientes as "Numero Identificación "
+					Tipo_Identificaci_n as "Tipo Identificación"
+					Email
+					Telefono
+					Added_Time as "Hora agregado"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Nombre_Cliente as "Nombre Comercial"
+					Raz_n_Social as "Razón Social"
+					No_Identificacion_Clientes as "Numero Identificación "
+					Tipo_Identificaci_n as "Tipo Identificación"
+					Email
+					Telefono
+					Direccion_Cliente as "Direccion"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+form PedidoProductos
+{
+	success message = "Los datos se han agregado correctamente!"
+	Section
+	(
+		type = section
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	Fecha_Pedido
+	(
+    	type = date
+		displayname = "Fecha Pedido"
+		initial value = "${zoho.currentdate}"
+		alloweddays = 0,1,2,3,4,5,6
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Productos
+	(
+		type = picklist	
+		values  = Productos.ID
+    	displayformat = [Referencia_de_Producto + " - " + Codigo]
+		sortorder = ascending
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Grupo
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Linea
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Cantidad
+	(
+		type = decimal
+		initial value = 0
+		decimalplace = 0
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Gramaje_g
+	(
+		type = decimal
+		displayname = "Gramaje (g)"
+		initial value = 0
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Peso_Total_g
+	(
+		type = decimal
+		displayname = "Peso Total (g)"
+		initial value = 0
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Observaciones
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Fecha_de_Entrega
+	(
+    	type = date
+		displayname = "Fecha de Entrega"
+		alloweddays = 0,1,2,3,4,5,6
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Estado_del_Pedido
+	(
+    	type = text
+		displayname = "Estado del Pedido"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Cliente
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Enviar"
+			)
+			reset
+			(
+   				type = reset
+   				displayname = "Restablecer"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Actualizar"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancelar"
+			)
+		}
+	}
+}
+list PedidoProductos_Report
+{
+	displayName = "PedidoProductos Reporte"
+	show all rows from PedidoProductos    
+	(
+		Productos
+		Observaciones
+		Fecha_Pedido as "Fecha Pedido"
+		Fecha_de_Entrega as "Fecha de Entrega"
+		Cliente
+		Cantidad
+		Gramaje_g as "Gramaje (g)"
+		Peso_Total_g as "Peso Total (g)"
+		Grupo
+		Linea
+		Estado_del_Pedido as "Estado del Pedido"
+	)
+	filters
+	(
+		Fecha_de_Entrega
+		"Pedidos para Mañana"  :  Fecha_de_Entrega is tomorrow
+	)
+	sort by
+	(
+		Fecha_Pedido descending
+	)
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Fecha_Pedido as "Fecha Pedido"
+					Fecha_de_Entrega as "Fecha de Entrega"
+					Estado_del_Pedido as "Estado del Pedido"
+					Cliente
+					Productos
+					Cantidad
+					Gramaje_g as "Gramaje (g)"
+					Peso_Total_g as "Peso Total (g)"
+					Grupo
+					Linea
+					Observaciones
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+		     	title = "Overview"
+				fields
+				(
+					Productos
+					Observaciones
+					Fecha_Pedido as "Fecha Pedido"
+					Fecha_de_Entrega as "Fecha de Entrega"
+					Cliente
+					Cantidad
+					Gramaje_g as "Gramaje (g)"
+					Peso_Total_g as "Peso Total (g)"
+					Grupo
+					Linea
+					Estado_del_Pedido as "Estado del Pedido"
+				)
+			)
+			datablock2
+			(
+		     	title = "Productos"
+		     	related field = Productos
+				fields
+				(
+					Codigo
+					Referencia_de_Producto as "Referencia de Producto"
+					Gramaje_g as "Gramaje (g)"
+					Formulacion as "Formulación (Grupo)"
+					Categoria as "Categoria (Línea)"
+				)
+			)
+			datablock3
+			(
+		     	title = "Title"
+				fields
+				(
+					Fecha_Pedido as "Fecha Pedido"
+					Productos
+					Grupo
+					Linea
+					Cantidad
+					Gramaje_g as "Gramaje (g)"
+					Peso_Total_g as "Peso Total (g)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+form Pedidos
+{
+	success message = "Su pedido ha sido enviado con Éxito"
+	feature property = 256
+	Seccion_de_Clientes
+	(
+		type = section
+		displayname = "Cliente"
+		visibility = true
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	No_Identificacion
+	(
+		type = number
+		displayname = "Numero de Identificación"
+    	description
+    	[
+    		type = help_text
+    	 	message = "Digita tu numero de identificación  (NIT, Cedula u otro)"
+    	]
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Nombre_Cliente
+	(
+    	type = text
+		displayname = "Nombre Cliente"
+		initial value = "Su Empresa"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Clientes_Inactivo
+	(
+		type = picklist	
+		displayname = "Clientes"
+		values  = Clientes.ID
+    	displayformat = [" - " + No_Identificacion_Clientes]
+		allow new entries
+		[
+			displayname = "Agregar nuevo"
+		]
+		sortorder = ascending
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Alerta
+	(
+    	type = textarea
+		height = 100px
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Seccion_de_Registro
+	(
+		type = section
+		displayname = "Registro de Clientes"
+		visibility = true
+	 	row = 2
+	 	column = 0   
+		width = medium
+	)
+	Nombre_Comercial_R
+	(
+    	type = text
+		displayname = "Nombre Comercial"
+	 	row = 2
+	 	column = 1   
+		width = medium
+	)
+	Razon_Social_R
+	(
+    	type = text
+		displayname = "Razon Social"
+	 	row = 2
+	 	column = 1   
+		width = medium
+	)
+	Tipo_de_Identificacion_R
+	(
+		type = picklist
+		displayname = "Tipo de Identificacion"
+		maxchar = 100
+		values = {"NIT","Cedula Ciudadania","Cedula Extranjería"}
+	 	row = 2
+	 	column = 1   
+		width = medium
+	)
+	No_Identificacion_R
+	(
+		type = number
+		displayname = "Numero de Identificacion"
+	 	row = 2
+	 	column = 1   
+		width = medium
+	)
+	Email_R
+	(
+    	type = email
+		displayname = "Email"
+		maxchar = 80
+	 	row = 2
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	Telefono_R
+	(
+    	type = phonenumber
+		displayname = "Telefono"
+	 	row = 2
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	Direccion_R
+	(
+    	type = address
+		displayname = "Direccion"
+     	capture_coordinates = true
+     	adjust_using_map = true
+     	address_line_1
+     	(
+	     	  type = address_line_1
+	     	  displayname = "Direccion"
+     	) 
+     	address_line_2
+     	(
+	     	  type = address_line_2
+	     	  displayname = "Address Line 2"
+	     	 visibility = false
+     	) 
+     	district_city
+     	(
+	     	  type = district_city
+	     	  displayname = "Ciudad"
+     	) 
+     	state_province
+     	(
+	     	  type = state_province
+	     	  displayname = "Departamento"
+     	) 
+     	postal_Code
+     	(
+	     	  type = postal_Code
+	     	  displayname = "Postal Code"
+	     	 visibility = false
+     	) 
+     	country
+     	(
+	     	  type = country
+	     	  displayname = "Country"
+	     	 visibility = false
+     	) 
+     	latitude
+     	(
+	     	  type = latitude
+	     	  displayname = "latitude"
+	     	 visibility = false
+     	) 
+     	longitude
+     	(
+	     	  type = longitude
+	     	  displayname = "longitude"
+	     	 visibility = false
+     	) 
+	 	row = 2
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	Seccion_de_Despacho
+	(
+		type = section
+		displayname = "Despacho"
+		visibility = true
+	 	row = 3
+	 	column = 0   
+		width = medium
+	)
+	Despacho2
+	(
+		type = picklist
+		displayname = "Despacho"
+		maxchar = 100
+		values = {"DOMICILIO","RECOGER EN PLANTA","FLOTA"}
+	 	row = 3
+	 	column = 1   
+		width = medium
+	)
+	Sede
+	(
+    	type = text
+	 	row = 3
+	 	column = 1   
+		width = medium
+	)
+	Direccion_de_Entrega
+	(
+    	type = address
+		displayname = "Direccion de Entrega"
+     	capture_coordinates = true
+     	adjust_using_map = false
+     	address_line_1
+     	(
+	     	  type = address_line_1
+	     	  displayname = "Address Line 1"
+     	) 
+     	address_line_2
+     	(
+	     	  type = address_line_2
+	     	  displayname = "Address Line 2"
+	     	 visibility = false
+     	) 
+     	district_city
+     	(
+	     	  type = district_city
+	     	  displayname = "Ciudad"
+     	) 
+     	state_province
+     	(
+	     	  type = state_province
+	     	  displayname = "Departamento"
+     	) 
+     	postal_Code
+     	(
+	     	  type = postal_Code
+	     	  displayname = "Postal Code"
+	     	 visibility = false
+     	) 
+     	country
+     	(
+	     	  type = country
+	     	  displayname = "Country"
+	     	 visibility = false
+     	) 
+     	latitude
+     	(
+	     	  type = latitude
+	     	  displayname = "latitude"
+	     	 visibility = false
+     	) 
+     	longitude
+     	(
+	     	  type = longitude
+	     	  displayname = "longitude"
+	     	 visibility = false
+     	) 
+	 	row = 3
+	 	column = 1   
+		width = medium
+		personal data = true
+	)
+	Horario_de_Atencion
+	(
+    	type = text
+		displayname = "Horario de Atención"
+	 	row = 3
+	 	column = 1   
+		width = medium
+	)
+	Observaciones
+	(
+    	type = textarea
+		height = 100px
+	 	row = 3
+	 	column = 1   
+		width = medium
+	)
+	Estado_del_Pedido
+	(
+		type = picklist
+		displayname = "Estado del Pedido"
+		maxchar = 100
+		values = {"En Proceso","Entregado","Pagado","Entregado y Pagado"}
+		initial value = "En Proceso"
+	 	row = 3
+	 	column = 1   
+		width = medium
+	)
+	Pedido
+	(
+		type = grid
+		values  = PedidoProductos.ID
+	 	row = 4
+	 	column = 1   
+		width = medium
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Enviar"
+			)
+			reset
+			(
+   				type = reset
+   				displayname = "Restablecer"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Actualizar"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancelar"
+			)
+		}
+	}
+}
+list Pedidos_Report
+{
+	displayName = "Pedidos Reporte"
+	show all rows from Pedidos    
+	(
+		Despacho2 as "Despacho"
+		Direccion_de_Entrega  as "Direccion de Entrega"
+	 	(
+	      	displayformat = [address_line_1+""+address_line_2+""+district_city+""+state_province+""+postal_Code+""+country]
+	      	enable = Link_to_Map,Show_As_Text
+	 	)
+		Horario_de_Atencion as "Horario de Atención"
+		Observaciones
+		Clientes_Inactivo as "Clientes"
+		(
+			view = Clientes_Report
+		)
+		Added_Time as "Fecha"
+		Sede
+		Nombre_Cliente as "Nombre Cliente"
+		Razon_Social_R as "Razon Social"
+		No_Identificacion as "Numero de Identificación"
+		Estado_del_Pedido as "Estado del Pedido"
+		Alerta
+		Nombre_Comercial_R as "Nombre Comercial"
+		Tipo_de_Identificacion_R as "Tipo de Identificacion"
+		No_Identificacion_R as "Numero de Identificacion"
+		Clientes_Inactivo.Nombre_Cliente as "Nombre Comercial"
+		Clientes_Inactivo.Raz_n_Social as "Razón Social"
+		Clientes_Inactivo.Tipo_Identificaci_n as "Tipo Identificación"
+		Clientes_Inactivo.No_Identificacion_Clientes as "Numero Identificación "
+	)
+	sort by
+	(
+		Added_Time descending
+	)
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Added_Time as "Fecha"
+					No_Identificacion as "Numero de Identificación"
+					Nombre_Cliente as "Nombre Cliente"
+					Despacho2 as "Despacho"
+					Sede
+					Direccion_de_Entrega as "Direccion de Entrega"
+					Horario_de_Atencion as "Horario de Atención"
+					Observaciones
+					Razon_Social_R as "Razon Social"
+					Estado_del_Pedido as "Estado del Pedido"
+					Clientes_Inactivo as "Clientes"
+					Nombre_Comercial_R as "Nombre Comercial"
+					Tipo_de_Identificacion_R as "Tipo de Identificacion"
+					No_Identificacion_R as "Numero de Identificacion"
+					Clientes_Inactivo.Nombre_Cliente as "Nombre Comercial"
+					Clientes_Inactivo.Raz_n_Social as "Razón Social"
+					Clientes_Inactivo.Tipo_Identificaci_n as "Tipo Identificación"
+					Clientes_Inactivo.No_Identificacion_Clientes as "Numero Identificación "
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+		     	title = "Overview"
+				fields
+				(
+					Nombre_Cliente as "Nombre Cliente"
+					No_Identificacion as "Numero de Identificación"
+					Despacho2 as "Despacho"
+					Sede
+					Direccion_de_Entrega as "Direccion de Entrega"
+					Horario_de_Atencion as "Horario de Atención"
+					Observaciones
+					Estado_del_Pedido as "Estado del Pedido"
+				)
+			)
+			datablock3
+			(
+		     	title = "Pedido"
+		     	related field = Pedido
+				fields
+				(
+					Fecha_Pedido as "Fecha Pedido"
+					Productos
+					Grupo
+					Linea
+					Cantidad
+					Gramaje_g as "Gramaje (g)"
+					Peso_Total_g as "Peso Total (g)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+InfoProductos as "InfoProductos"
+{
+	type =  form
+	form = Pedidos
+	record event = on add or edit
+
+	on user input of Pedido.Productos
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					infoproducto = Productos[ID == input.Pedido.Productos];
+				row.Gramaje_g=infoproducto.Gramaje_g;
+				row.Linea=infoproducto.Categoria;
+				row.Grupo=infoproducto.Formulacion;
+				row.Peso_Total_g=row.Gramaje_g * input.Pedido.Cantidad;
+				row.Fecha_de_Entrega=row.Fecha_Pedido.addDay(2);
+			)
+		}
+	}
+
+}
+
+Cliente_y_Estado as "Cliente y Estado"
+{
+	type =  form
+	form = Pedidos
+	record event = on add or edit
+
+	on add row of Pedido
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					infocliente = Clientes[Nombre_Cliente == input.Nombre_Cliente];
+				row.Cliente=infocliente.Nombre_Cliente;
+			)
+		}
+	}
+
+}
+
+Error_al_dar_Enter as "Error al dar Enter"
+{
+	type =  form
+	form = Pedidos
+	record event = on add or edit
+
+	on validate
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					if(input.Pedido.isEmpty())
+				{
+					alert "Por favor ingresa la toda la informacion para registrar su pedido.";
+					cancel submit;
+				}
+				alert "Su registro fue creado con Exito";
+			)
+		}
+	}
+
+}
+
+Creacion_de_Cliente1 as "Creacion de Cliente"
+{
+	type =  form
+	form = Pedidos
+	record event = on add or edit
+
+	on success
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					// --- Inicio del Script On Success ---
+				// Obtener el ID del registro que disparó el flujo (útil para los logs)
+				triggeringRecordID = input.ID;
+				info "Iniciando script de verificación/creación de cliente para el registro: " + triggeringRecordID;
+				// Buscar si el cliente ya existe usando el Número de Identificación del formulario actual
+				// Asegúrate de que 'input.Numero_de_Identificaci_n' es el nombre correcto del campo en el formulario que dispara este workflow
+				clientRecord = Clientes[No_Identificacion_Clientes == input.No_Identificacion];
+				info "Buscando cliente con Identificación: " + input.No_Identificacion_R + ". Registros encontrados: " + clientRecord.count();
+				// Si el cliente NO existe (la consulta no devolvió registros)
+				if(clientRecord.count() == 0)
+				{
+					info "Cliente con Identificación " + input.No_Identificacion_R + " no encontrado. Intentando crear nuevo registro...";
+					try 
+					{
+						// Insertar el nuevo registro en el formulario Clientes
+						new_record = insert into Clientes
+						[
+							Raz_n_Social=input.Razon_Social_R
+							Email=input.Email_R
+							Direccion_Cliente=input.Direccion_R
+							Telefono=input.Telefono_R
+							No_Identificacion_Clientes=input.No_Identificacion_R
+							Tipo_Identificaci_n=input.Tipo_de_Identificacion_R
+							Nombre_Cliente=input.Nombre_Comercial_R
+							Added_User=zoho.loginuser
+						];
+						// Log de éxito: Incluye el ID del nuevo cliente creado
+						info "¡ÉXITO! Nuevo cliente creado con ID: " + new_record + " para la Identificación: " + input.No_Identificacion_R + ". Disparado por registro ID: " + triggeringRecordID;
+					}
+					catch (e)
+					{
+						// Log en caso de error durante la inserción
+						info "¡ERROR! No se pudo insertar el nuevo cliente para la Identificación: " + input.No_Identificacion_R + ". Error: " + e + ". Disparado por registro ID: " + triggeringRecordID;
+					}
+				}
+				else
+				{
+					// Log si el cliente ya existía
+					existingClientID = clientRecord.ID;
+					// Obtener el ID del cliente encontrado
+					info "Cliente con Identificación " + input.No_Identificacion_R + " ya existe (ID: " + existingClientID + "). No se creó un nuevo registro. Disparado por registro ID: " + triggeringRecordID;
+				}
+				info "Script de verificación/creación de cliente finalizado para el registro: " + triggeringRecordID;
+				// --- Fin del Script On Success ---
+			)
+		}
+	}
+
+}
+
+Estado_del_Pedido as "Estado del Pedido"
+{
+	type =  form
+	form = Pedidos
+	record event = on edit
+
+	on load
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					show Estado_del_Pedido;
+			)
+		}
+	}
+
+}
+
+Estado_del_Pedido_Cambio_ as "Estado del Pedido Cambio de Estado"
+{
+	type =  form
+	form = Pedidos
+	record event = on edit
+
+	on user input of Estado_del_Pedido
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					for each  record in input.Pedido
+				{
+					record.Estado_del_Pedido=input.Estado_del_Pedido;
+				}
+			)
+		}
+	}
+
+}
+
+Adicionar_estado_del_pedi as "Adicionar estado del pedido"
+{
+	type =  form
+	form = Pedidos
+	record event = on add or edit
+
+	on add row of Pedido
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					input.Pedido.Estado_del_Pedido=input.Estado_del_Pedido;
+			)
+		}
+	}
+
+}
+
+Paso_1_Configuraci_n_Inic as "Paso 1. Configuración Inicial"
+{
+	type =  form
+	form = Pedidos
+	record event = on add
+
+	on load
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					// Script: On Load del Formulario Pedidos
+				// Ocultar campos y secciones inicialmente
+				// Ocultar campo Nombre_Cliente (asumiendo que está en la sección Clientes)
+				hide Nombre_Cliente;
+				hide Clientes_Inactivo;
+				hide Alerta;
+				// Ocultar Secciones completas
+				hide Seccion_de_Registro;
+				hide Seccion_de_Despacho;
+				// Ocultar el subformulario Pedido
+				hide Pedido;
+				// Opcional: Limpiar campos por si acaso quedan con datos residuales (poco probable en On Load)
+				input.Nombre_Cliente = "";
+				// Puedes agregar limpieza para otros campos si es necesario
+			)
+		}
+	}
+
+}
+
+Paso_2_L_gica_Principal as "Paso 2. Lógica Principal"
+{
+	type =  form
+	form = Pedidos
+	record event = on add
+
+	on user input of No_Identificacion
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					// Script: On User Input del campo No_Identificacion en Formulario Pedidos
+				// Obtener el NIT ingresado
+				nit_ingresado = input.No_Identificacion;
+				// Verificar si el campo NIT está vacío
+				if(nit_ingresado == null)
+				{
+					// Si está vacío, ocultar todo de nuevo (resetear)
+					hide Nombre_Cliente;
+					hide Seccion_de_Registro;
+					hide Seccion_de_Despacho;
+					hide Pedido;
+					// Limpiar campos que pudieron llenarse
+				}
+				else
+				{
+					// Buscar el cliente en el formulario Clientes usando el NIT ingresado
+					// Asegúrate que 'No_Identificacion_Clientes' es el nombre de enlace correcto en el form 'Clientes'
+					cliente_existente = Clientes[No_Identificacion_Clientes == nit_ingresado];
+					// Verificar si se encontró un cliente
+					if(cliente_existente.count() > 0)
+					{
+						// --- Cliente ENCONTRADO ---
+						// Esconder la sección de registro
+						hide Seccion_de_Registro;
+						// Limpiar campos de registro por si acaso el usuario cambió de opinión
+						// (Opcional, pero buena práctica)
+						input.Nombre_Comercial_R = "";
+						input.Razon_Social_R = "";
+						input.Tipo_de_Identificacion_R = null;
+						// O el valor por defecto si es lookup/dropdown
+						input.No_Identificacion_R = "";
+						input.Email_R = "";
+						input.Telefono_R = "";
+						input.Direccion_R = null;
+						// Mostrar el nombre del cliente y poblarlo
+						input.Nombre_Cliente = cliente_existente.Nombre_Cliente;
+						// Usa el nombre de enlace correcto del campo Nombre_Cliente en 'Clientes'
+						show Nombre_Cliente;
+						// Opcional: Hacer el campo Nombre_Cliente no editable si se encontró
+						// disable Nombre_Cliente; // Descomentar si quieres bloquearlo
+						// Mostrar la sección de despacho
+						show Seccion_de_Despacho;
+						// Mostrar el subformulario de pedido
+						show Pedido;
+						// Limpiar alerta si existiera (Zoho no tiene una función directa para quitar alertas, 
+						// pero al cambiar el flujo visualmente, el usuario entenderá)
+						hide Pedido.Linea;
+						hide Pedido.Peso_Total_g;
+						hide Pedido.Fecha_Pedido;
+						hide Pedido.Grupo;
+						hide Pedido.Peso_Total_g;
+						hide Pedido.Cliente;
+						hide Pedido.Gramaje_g;
+					}
+					else
+					{
+						// --- Cliente NO ENCONTRADO ---
+						// Mostrar alerta para registro
+						alert "Por favor registrarse como cliente";
+						// Ocultar el campo Nombre_Cliente (ya que no hay dato)
+						hide Nombre_Cliente;
+						// Limpiar por si acaso
+						// enable Nombre_Cliente; // Asegurarse que no está deshabilitado si se habilita/deshabilita dinámicamente
+						// Mostrar la sección de registro
+						show Seccion_de_Registro;
+						// Poblar el No. Identificación en la sección de registro con el valor ya ingresado
+						input.No_Identificacion_R = nit_ingresado;
+						// Mostrar la sección de despacho (según requerimiento: mostrarla *después* de que se llene el registro, pero esto es complejo en 'On User Input'. 
+						// Una alternativa más simple es mostrarla junto con Registro y hacerla requerida al enviar)
+						// Si quieres que SÓLO aparezca Registro y luego, al llenarlo, aparezca Despacho/Pedido, 
+						// se necesitarían más scripts en los campos de la sección Registro, lo cual complica el flujo.
+						// Este código asume que se muestran Registro, Despacho y Pedido para el nuevo cliente.
+						show Seccion_de_Despacho;
+						// Mostrar el subformulario de pedido
+						show Pedido;
+						hide Pedido.Grupo;
+						hide Pedido.Linea;
+						hide Pedido.Gramaje_g;
+						hide Pedido.Cliente;
+						hide Pedido.Peso_Total_g;
+						hide Pedido.Estado_del_Pedido;
+						hide Pedido.Fecha_Pedido;
+						hide Pedido.Fecha_de_Entrega;
+						// Asegurarse que los campos de registro sean requeridos (esto usualmente se configura en el Form Builder, 
+						// pero podrías añadir validaciones extra en el 'On Validate' si es necesario)
+					}
+				}
+				// Lógica adicional para la Fecha_Pedido en el subformulario:
+				// Esto es mejor manejarlo directamente en las propiedades del campo 'Fecha_Pedido' dentro del subformulario.
+				// Configura su valor inicial o por defecto a 'zoho.currentdate'.
+				// Si necesitas forzarlo cada vez que se añade una fila (aunque no es lo usual):
+				/*
+				if (input.Pedido.count() > 0)
+				{
+				    for each fila_pedido in input.Pedido
+				    {
+				        if (fila_pedido.Fecha_Pedido == null)
+				        {
+				            fila_pedido.Fecha_Pedido = zoho.currentdate;
+				        }
+				    }
+				} 
+				*/
+				// El código anterior para la fecha es opcional y generalmente no necesario si configuras bien el default.
+			)
+		}
+	}
+
+}
+
+Paso_3_Crear_Nuevo_Client as "Paso 3. Crear Nuevo Cliente"
+{
+	type =  form
+	form = Pedidos
+	record event = on add
+
+	on success
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					// Script: On Add -> On Success del Formulario Pedidos (Alternativa con IF anidado)
+				nit_enviado = input.No_Identificacion;
+				cliente_existente = Clientes[No_Identificacion_Clientes == nit_enviado];
+				// Paso 1: Verificar si el cliente NO existe
+				if(cliente_existente.count() == 0)
+				{
+					// El cliente no existe. Ahora, Paso 2: Verificar si se llenó el registro.
+					// Asegúrate que Razon_Social_R es el link name correcto y es un campo de texto.
+					if(input.Razon_Social_R != null && input.Razon_Social_R != "")
+					{
+						// --- Cliente NUEVO y Registro Lleno: Crear el cliente ---
+						info "Cliente no encontrado y registro lleno. Creando nuevo cliente desde pedido: " + nit_enviado;
+						mapa_nuevo_cliente = Map();
+						mapa_nuevo_cliente.put("Nombre_Cliente",input.Nombre_Comercial_R);
+						mapa_nuevo_cliente.put("Raz_n_Social",input.Razon_Social_R);
+						mapa_nuevo_cliente.put("Tipo_Identificaci_n",input.Tipo_de_Identificacion_R);
+						mapa_nuevo_cliente.put("No_Identificacion_Clientes",input.No_Identificacion_R);
+						mapa_nuevo_cliente.put("Email",input.Email_R);
+						mapa_nuevo_cliente.put("Telefono",input.Telefono_R);
+						mapa_nuevo_cliente.put("Direccion_Cliente",input.Direccion_R);
+						try 
+						{
+							response = insert into Clientes
+							[
+								Added_User=zoho.loginuser
+								Nombre_Cliente=mapa_nuevo_cliente.get("Nombre_Cliente")
+								Raz_n_Social=mapa_nuevo_cliente.get("Raz_n_Social")
+								Tipo_Identificaci_n=mapa_nuevo_cliente.get("Tipo_Identificaci_n")
+								No_Identificacion_Clientes=mapa_nuevo_cliente.get("No_Identificacion_Clientes")
+								Email=mapa_nuevo_cliente.get("Email")
+								Telefono=mapa_nuevo_cliente.get("Telefono")
+								Direccion_Cliente=mapa_nuevo_cliente.get("Direccion_Cliente")
+							];
+							info "Nuevo cliente creado con ID: " + response;
+						}
+						catch (e)
+						{
+							info "Error al crear cliente desde pedido: " + e;
+						}
+					}
+					else
+					{
+						// Cliente no encontrado, PERO registro NO estaba lleno (o Razon_Social_R estaba vacía)
+						info "Cliente con NIT " + nit_enviado + " no encontrado, pero faltaron datos de registro. No se crea nuevo cliente.";
+					}
+				}
+				else
+				{
+					// Cliente SÍ encontrado
+					info "El cliente con NIT " + nit_enviado + " ya existía. No se crea nuevo cliente.";
+				}
+			)
+		}
+	}
+
+}
+
+Paso_4_Validacion_de_info as "Paso 4. Validacion de información en Pedidos"
+{
+	type =  form
+	form = Pedidos
+	record event = on add
+
+	on validate
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					// Script: On Validate del Formulario Pedidos (VALIDACIÓN DESPACHO UNIVERSAL ACTUALIZADA)
+				// Acción: Validar TODOS los campos obligatorios antes de permitir el envío.
+				info "Iniciando validación On Submit...";
+				// Re-verificar si es cliente existente o nuevo (necesario para validar Registro después)
+				nit_ingresado = input.No_Identificacion;
+				// ** Reemplaza 'Clientes' y 'No_Identificacion_Clientes' por tus link names correctos **
+				cliente_existente = Clientes[No_Identificacion_Clientes == nit_ingresado];
+				info "Validación: Cliente existe? Count = " + cliente_existente.count();
+				// ==================================================================
+				// === VALIDACIONES COMUNES (Aplican a TODOS los envíos) ===
+				// ==================================================================
+				// --- 1. Validación Subformulario Pedido ---
+				// ** Reemplaza 'Pedido' por tu link name del subformulario **
+				if(input.Pedido == null || input.Pedido.count() == 0)
+				{
+					alert "SUBFORMULARIO: Debe añadir al menos un producto al pedido.";
+					cancel submit;
+				}
+				else
+				{
+					row_index = 0;
+					for each  fila_pedido in input.Pedido
+					{
+						row_index = row_index + 1;
+						// ** Reemplaza 'Productos' por tu link name **
+						if(fila_pedido.Productos == null)
+						{
+							alert "SUBFORMULARIO: Debe seleccionar un Producto en la fila #" + row_index + ".";
+							cancel submit;
+						}
+						// ** Reemplaza 'Cantidad' por tu link name **
+						if(fila_pedido.Cantidad == null || fila_pedido.Cantidad <= 0)
+						{
+							alert "SUBFORMULARIO: La Cantidad debe ser mayor a 0 en la fila #" + row_index + ".";
+							cancel submit;
+						}
+					}
+				}
+				info "Validación: Subformulario OK.";
+				// --- 2. Validación Sección Despacho (EXCEPTO Observaciones) ---
+				// ** ¡¡Reemplaza los link names y ajusta la condición según el TIPO REAL de cada campo!! **
+				// Validar Despacho2 (Asumiendo Texto) - Reemplaza 'Despacho2'
+				if(input.Despacho2 == null || input.Despacho2 == "")
+				{
+					alert "DESPACHO: El campo 'Despacho2' es obligatorio.";
+					cancel submit;
+				}
+				// Validar Sede (Asumiendo Lookup/Dropdown) - Reemplaza 'Sede'
+				if(input.Sede == null)
+				{
+					alert "DESPACHO: Debe seleccionar la Sede.";
+					cancel submit;
+				}
+				// Validar Dirección de Entrega (Asumiendo Dirección) - Reemplaza 'Direccion_de_Entrega'
+				if(input.Direccion_de_Entrega.address_line_1 == null || input.Direccion_de_Entrega.address_line_1 == "")
+				{
+					alert "DESPACHO: Debe especificar la Dirección de Entrega (Línea 1).";
+					cancel submit;
+				}
+				// Validar Horario de Atención (Asumiendo Texto) - Reemplaza 'Horario_de_Atencion'
+				if(input.Horario_de_Atencion == null || input.Horario_de_Atencion == "")
+				{
+					alert "DESPACHO: Debe especificar el Horario de Atención.";
+					cancel submit;
+				}
+				// Validar Estado_del_Pedido (Asumiendo Lookup/Dropdown) - Reemplaza 'Estado_del_Pedido'
+				if(input.Estado_del_Pedido == null)
+				{
+					alert "DESPACHO: Debe seleccionar el Estado del Pedido.";
+					cancel submit;
+				}
+				// NO validamos input.Observaciones por requisito.
+				info "Validación: Campos Despacho OK.";
+				// ==================================================================
+				// === VALIDACIONES ESPECÍFICAS (Solo para Clientes NUEVOS) ===
+				// ==================================================================
+				if(cliente_existente.count() == 0)
+				{
+					// --- Cliente Nuevo: Validar campos de Registro OBLIGATORIOS ---
+					info "Validación: Cliente nuevo. Validando Registro...";
+					// ** ¡¡ Asegúrate que todas las validaciones de Registro Obligatorias están aquí !! **
+					// ** Reemplaza los link names por los tuyos y ajusta la condición según el tipo de campo. **
+					if(input.Nombre_Comercial_R == null || input.Nombre_Comercial_R == "")
+					{
+						alert "REGISTRO: Debe ingresar el Nombre Comercial.";
+						cancel submit;
+					}
+					if(input.Razon_Social_R == null || input.Razon_Social_R == "")
+					{
+						alert "REGISTRO: Debe ingresar la Razón Social.";
+						cancel submit;
+					}
+					if(input.Tipo_de_Identificacion_R == null)
+					{
+						alert "REGISTRO: Debe seleccionar el Tipo de Identificación.";
+						cancel submit;
+					}
+					// Validar No. Identificación (Asumiendo Número) - Reemplaza 'No_Identificacion_R'
+					if(input.No_Identificacion_R == null)
+					{
+						alert "REGISTRO: Debe ingresar el Número de Identificación.";
+						cancel submit;
+					}
+					if(input.Email_R == null || input.Email_R == "" || !input.Email_R.contains("@"))
+					{
+						alert "REGISTRO: Debe ingresar un Email válido.";
+						cancel submit;
+					}
+					// Validar Teléfono (Asumiendo Texto, si es Número usa == null) - Reemplaza 'Telefono_R'
+					if(input.Telefono_R == null || input.Telefono_R == "")
+					{
+						alert "REGISTRO: Debe ingresar un Teléfono.";
+						cancel submit;
+					}
+					// Validar Dirección de Registro (Asumiendo Dirección) - Reemplaza 'Direccion_R'
+					if(input.Direccion_R.address_line_1 == null || input.Direccion_R.address_line_1 == "")
+					{
+						alert "REGISTRO: Debe ingresar una Dirección (Línea 1).";
+						cancel submit;
+					}
+					info "Validación: Campos Registro OK.";
+				}
+				else
+				{
+					info "Validación: Cliente existente. No se valida sección Registro.";
+				}
+				info "Validación On Submit completada con éxito.";
+				alert "Su registro fue creado con Exito";
+				// Si el script llega hasta aquí sin ejecutar 'cancel submit', el envío es válido.
+			)
+		}
+	}
+
+}
+
+Nombre_Cliente_en_Pedidos as "Nombre Cliente en Pedidos"
+{
+	type =  form
+	form = Pedidos
+	record event = on add
+		status = inactive
+
+	on user input of Nombre_Comercial_R
+	{
+		actions 
+		{
+			custom deluge script
+			(
+					input.Nombre_Cliente = input.Nombre_Comercial_R;
+			)
+		}
+	}
+
+}
+
+form Productos
+{
+	success message = "Los datos se han agregado correctamente!"
+	Section
+	(
+		type = section
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	Codigo
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Referencia_de_Producto
+	(
+    	type = text
+		displayname = "Referencia de Producto"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Gramaje_g
+	(
+		type = decimal
+		displayname = "Gramaje (g)"
+		decimalplace = 0
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Formulacion
+	(
+		type = picklist
+		displayname = "Formulación (Grupo)"
+		maxchar = 100
+		values = {"BAGEL TRADICIONAL","BAGEL INTEGRAL","BAGUETTE","FOCACCIAS","BAOS","BISCUITS","MUFFINS","ALFAJOR","GALLETA MANTEQUILLA","GALLETA AVENA","GALLETA CHOCOLATE","GALLETA RED VELVET","TORTA","BROWNIES","BLONDIES","ALMOJABANA","PAN YUCA","PAN BONO","PAN QUESO","PAN BANANO","PAN MAIZ","FROSTING","PAN FLOR","CROISSANT","HOJALDRES","BRIOCHE","PAPA","TRIP","VEGANO","MASA MADRE","CENTENO"}
+		others option = true
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Categoria
+	(
+		type = picklist
+		displayname = "Categoria (Línea)"
+		maxchar = 100
+		values = {"Laminados","Maquila","Panaderia","Reposteria"}
+		others option = true
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Enviar"
+			)
+			reset
+			(
+   				type = reset
+   				displayname = "Restablecer"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Actualizar"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancelar"
+			)
+		}
+	}
+}
+list Orden_de_producci_n
+{
+	displayName = "Orden de producciòn"
+	show all rows from Productos    
+	(
+		Codigo
+		Referencia_de_Producto as "Referencia de Producto"
+		Gramaje_g as "Gramaje (g)"
+		Formulacion as "Formulación (Grupo)"
+		Categoria as "Categoria (Línea)"
+	)
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Referencia_de_Producto as "Referencia de Producto"
+					Gramaje_g as "Gramaje (g)"
+					Formulacion as "Formulación (Grupo)"
+					Categoria as "Categoria (Línea)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Codigo
+					Referencia_de_Producto as "Referencia de Producto"
+					Gramaje_g as "Gramaje (g)"
+					Formulacion as "Formulación (Grupo)"
+					Categoria as "Categoria (Línea)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+list Productos_Report
+{
+	displayName = "Productos Reporte"
+	show all rows from Productos    
+	(
+		Referencia_de_Producto as "Referencia de Producto"
+		Formulacion as "Formulación (Grupo)"
+		Categoria as "Categoria (Línea)"
+		Codigo
+		Gramaje_g as "Gramaje (g)"
+	)
+	quickview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Codigo
+					Referencia_de_Producto as "Referencia de Producto"
+					Categoria as "Categoria (Línea)"
+					Formulacion as "Formulación (Grupo)"
+					Gramaje_g as "Gramaje (g)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+			record
+			(
+				Edit   	   
+				Duplicate   	   
+				Delete   	   
+    		)
+    	)
+    	action
+    	(
+			on click
+			(
+				View Record   	   
+    		)
+			on right click
+			(
+				Edit   	   
+				Delete   	   
+				Duplicate   	   
+				View Record   	   
+    		)
+     	)
+	)
+	detailview
+	(
+		layout
+		(
+			datablock1
+			(
+				fields
+				(
+					Referencia_de_Producto as "Referencia de Producto"
+					Formulacion as "Formulación (Grupo)"
+					Categoria as "Categoria (Línea)"
+					Codigo
+					Gramaje_g as "Gramaje (g)"
+				)
+			)
+		)
+		menu
+    	(
+    	 	header
+    	 	(
+    		 	Edit 
+    		 	Duplicate 
+    		 	Delete 
+    	 	)
+    	)
+	)
+}
+
+<zml>
+  <layout>
+    <row>
+      <column width="33%">
+        <row>
+          <column width="100%">
+            <panel elementName="Panel">
+              <pr width='fill' height='fill'>
+                <pc padding='20px' bgColor='#FFFFFF' width='100%' vAlign='middle'>
+                  <pr width='auto' height='auto'>
+                    <pc padding='5px' vAlign='middle'>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' color='#444444' size='15px' type='Text' value='Clientes'> </text>
+                        </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <button marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' action='OpenURL' url='https://creatorapp.zohopublic.com/miguel474/florezcook/report-perma/Clientes_Report/snzweN6UXMzX6AP3g3pCvQhENuXN8Ke8dqjYq1vZPS96FvnmHd3q8frby9mJVstjCgw3r4Uba4Xm5GnZ3gQWvrJWfdQjxepnhKED' target='new-window' color='#FFFFFF' size='16px' text='Clientes' type='flat' bgColor='#0072F4' cornerRadius='3px' /> </pc>
+                      </pr>
+                    </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </panel>
+          </column>
+        </row>
+        <row>
+          <column width="100%">
+            <panel elementName="Panel 3">
+              <pr width='fill' height='fill'>
+                <pc padding='20px' bgColor='#FFFFFF' width='100%' hAlign='center' vAlign='middle'>
+                  <pr width='auto' height='auto'>
+                    <pc padding='5px'>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='5px' marginBottom='0px' marginTop='0px' color='#FF0048' size='36px' bold='true' type='Form Data' displayType='actual' thousandsSeperator='LOCALE' decimalSeperator='DOT' numberScale='none' value='thisapp.Clientes.ID.count'> </text>
+                        </pc>
+                        <pc>
+                          <image color='#FFFFFF' bgColor='#FF0048' width='40px' height='40px' type='icon' value='users-2-a-star' size='22px' cornerRadius='20px' iconType='solid' /> </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='5px' color='#333333' size='16px' type='Text' value='Clientes Registrados'> </text>
+                        </pc>
+                      </pr>
+                    </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </panel>
+          </column>
+        </row>
+      </column>
+      <column width="33%">
+        <row>
+          <column width="100%">
+            <panel elementName="Panel 1">
+              <pr width='fill' height='fill'>
+                <pc padding='20px' bgColor='#FFFFFF' width='100%' vAlign='middle'>
+                  <pr width='auto' height='auto'>
+                    <pc padding='5px' vAlign='middle'>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' color='#444444' size='15px' type='Text' value='Pedidos'> </text>
+                        </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <button marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' action='OpenURL' url='https://creatorapp.zohopublic.com/miguel474/florezcook/report-perma/Pedidos_Report/Q48MW8w2G9F1JRdWy4QkSbqNrUr2MpH0swzzhzyRNmPzODmS2ObDX3yj0YXU5KPgdq16b8MeK5aegdvRD4ZtH611ZyZ1xjdEWHUq' target='new-window' color='#FFFFFF' size='16px' text='Pedidos' type='flat' bgColor='#0072F4' cornerRadius='3px' /> </pc>
+                      </pr>
+                    </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </panel>
+          </column>
+        </row>
+        <row>
+          <column width="100%">
+            <panel elementName="Panel 4">
+              <pr width='fill' height='fill'>
+                <pc padding='20px' bgColor='#FFFFFF' width='100%' hAlign='center' vAlign='middle'>
+                  <pr width='auto' height='auto'>
+                    <pc padding='5px'>
+                      <pr>
+                        <pc>
+                          <image color='#FFFFFF' bgColor='#0ABB51' width='52px' height='52px' type='icon' value='media-1-ticket-76' size='32px' cornerRadius='26px' iconType='solid' /> </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='3px' color='#0ABB51' size='36px' bold='true' type='Form Data' displayType='actual' thousandsSeperator='LOCALE' decimalSeperator='DOT' numberScale='none' criteria='Pedido.Fecha_Pedido in this month' value='thisapp.Pedidos.ID.count'> </text>
+                        </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='3px' color='#333333' size='16px' type='Text' value='Pedidos Este Mes'> </text>
+                        </pc>
+                      </pr>
+                    </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </panel>
+          </column>
+        </row>
+      </column>
+      <column width="34%">
+        <row>
+          <column width="100%">
+            <panel elementName="Panel 2">
+              <pr width='fill' height='fill'>
+                <pc padding='20px' bgColor='#FFFFFF' width='100%' vAlign='middle'>
+                  <pr width='auto' height='auto'>
+                    <pc padding='5px' vAlign='middle'>
+                      <pr>
+                        <pc>
+                          <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' color='#444444' size='15px' type='Text' value='Productos'> </text>
+                        </pc>
+                      </pr>
+                      <pr>
+                        <pc>
+                          <button marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' action='OpenURL' url='https://creatorapp.zohopublic.com/miguel474/florezcook/report-perma/Productos_Report/BbGEwW2WFuGCCONXmEsNtUJnM8abHvR5X8ggGmhMyvO3NCpgT02PbxTyNmkCpUFwQ8bGdYWJ2qPa6RmJTJxnwzbU7Zk9bf7KrOkB' target='new-window' color='#FFFFFF' size='16px' text='Productos' type='flat' bgColor='#0072F4' cornerRadius='3px' /> </pc>
+                      </pr>
+                    </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </panel>
+          </column>
+        </row>
+        <row>
+          <column width="100%">
+            <chart elementName="Chart" type='Pie' bgColor='#FFFFFF' theme='theme1' legendPos='center.top' appLinkName='thisapp' formLinkName='PedidoProductos' xfield='Productos.Referencia_de_Producto' yfields='sum:Cantidad' quickFilters='Productos.Categoria' /> </column>
+        </row>
+      </column>
+    </row>
+    <row>
+      <column width="100%">
+        <chart elementName="Chart 1" type='Column' bgColor='#FFFFFF' theme='theme1' legendPos='center.top' appLinkName='thisapp' formLinkName='PedidoProductos' xfield='Fecha_Pedido' yfields='count:Productos.Referencia_de_Producto' dateGrouping='month_year' DelugeCriteria='Fecha_Pedido in this year' /> </column>
+    </row>
+    <row>
+      <column width="100%">
+        <report elementName="Report 1" appLinkName='thisapp' linkName='PedidoProductos_Report' allowPublicAccess='true' iszreport='false' heightType='auto' heightValue='700' /> </column>
+    </row>
+    <row>
+      <column width="100%">
+        <embed elementName="Embed" hAlign='center' url='https://analytics.zoho.com/open-view/1458559000004485358' width='800' height='600' /> </column>
+    </row>
+    <row>
+      <column width="100%">
+        <panel elementName="Panel 5">
+          <pr width='fill' height='fill'>
+            <pc padding='20px' bgColor='#FFFFFF' width='100%' vAlign='middle'>
+              <pr width='auto' height='auto'>
+                <pc padding='5px' vAlign='middle'>
+                  <pr>
+                    <pc>
+                      <text marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' color='#444444' size='15px' type='Text' value='CONSOLIDADO'> </text>
+                    </pc>
+                  </pr>
+                  <pr>
+                    <pc>
+                      <button marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' action='OpenURL' url='https://analytics.zoho.com/open-view/1458559000004485358/305e5248bacf4a8d3892147be0996c88' target='new-window' color='#FFFFFF' size='16px' text='Consolidado' type='rounded' bgColor='#0072F4' cornerRadius='45px' /> </pc>
+                  </pr>
+                </pc>
+              </pr>
+            </pc>
+          </pr>
+        </panel>
+      </column>
+    </row>
+    <row>
+      <column width="100%">
+        <panel elementName="Panel 6">
+          <pr width='fill' height='fill'>
+            <pc padding='20px' bgColor='#FFFFFF' width='100%' vAlign='middle'>
+              <pr width='auto' height='auto'>
+                <pc vAlign='middle'>
+                  <button marginLeft='0px' marginRight='0px' marginBottom='0px' marginTop='0px' action='OpenURL' url='https://analytics.zoho.com/open-view/1458559000004491852' target='new-window' color='#FFFFFF' size='16px' text='Analisis Clientes' type='rounded' bgColor='#0072F4' cornerRadius='45px' /> </pc>
+              </pr>
+            </pc>
+          </pr>
+        </panel>
+      </column>
+    </row>
+  </layout>
+</zml>

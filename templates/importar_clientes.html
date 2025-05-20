@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Importar Clientes | FlorezCook{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="fas fa-file-import me-2"></i>Importar Clientes</h4>
+        <a href="{{ url_for('clientes_list') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Volver a Clientes
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading">Instrucciones para importar clientes</h5>
+            <p class="mb-2">Siga estos pasos para importar clientes desde un archivo Excel:</p>
+            <ol class="mb-0">
+                <li>Descargue la <a href="#" id="downloadTemplate">plantilla de ejemplo</a> para asegurar el formato correcto.</li>
+                <li>Complete los datos de los clientes en la plantilla.</li>
+                <li>Seleccione el archivo Excel y haga clic en "Importar".</li>
+            </ol>
+        </div>
+        
+        <form action="#" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="archivo" class="form-label">Seleccionar archivo Excel</label>
+                <input class="form-control" type="file" id="archivo" name="archivo" accept=".xlsx, .xls" required>
+                <div class="form-text">Formatos soportados: .xlsx, .xls</div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload me-1"></i> Importar Clientes
+            </button>
+        </form>
+        
+        {% if resultados %}
+        <div class="mt-4">
+            <h5>Resultados de la importación</h5>
+            <div class="alert alert-{{ 'success' if resultados.exito else 'danger' }}">
+                {{ resultados.mensaje }}
+                {% if resultados.errores %}
+                <ul class="mt-2 mb-0">
+                    {% for error in resultados.errores %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Descargar plantilla de ejemplo
+    $('#downloadTemplate').click(function(e) {
+        e.preventDefault();
+        // Crear un libro de Excel con las columnas necesarias
+        const data = [
+            ['nombre_comercial', 'razon_social', 'tipo_identificacion', 'numero_identificacion', 'digito_verificacion', 'direccion', 'ciudad', 'departamento', 'pais', 'telefono', 'email', 'responsable', 'cargo', 'actividad_economica'],
+            ['Ejemplo S.A.S.', 'Ejemplo S.A.S.', 'NIT', '900123456', '7', 'Carrera 1 # 2-3', 'Bogotá', 'Bogotá D.C.', 'Colombia', '6011234567', 'ejemplo@empresa.com', 'Juan Pérez', 'Gerente', 'Comercio']
+        ];
+        
+        // Crear un libro de Excel
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+        
+        // Generar el archivo y forzar la descarga
+        XLSX.writeFile(wb, 'plantilla_importar_clientes.xlsx');
+    });
+});
+</script>
+{% endblock %}

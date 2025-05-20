@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if modo == 'editar' else 'Agregar' }} Producto | FlorezCook{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header"><h4 class="mb-0">{{ 'Editar' if modo == 'editar' else 'Agregar' }} Producto</h4></div>
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label campo-requerido">Código</label>
+                <input type="text" class="form-control" name="codigo" value="{{ producto.codigo if producto else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label campo-requerido">Referencia de Producto</label>
+                <input type="text" class="form-control" name="referencia_de_producto" value="{{ producto.referencia_de_producto if producto else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label campo-requerido">Gramaje (g)</label>
+                <input type="number" class="form-control" name="gramaje_g" value="{{ producto.gramaje_g if producto else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Grupo</label>
+                <input type="text" class="form-control" name="formulacion_grupo" value="{{ producto.formulacion_grupo if producto else '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Línea</label>
+                <input type="text" class="form-control" name="categoria_linea" value="{{ producto.categoria_linea if producto else '' }}">
+            </div>
+            <div class="text-end">
+                <a href="{{ url_for('productos_list') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

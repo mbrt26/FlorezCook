@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FlorezCook - Sistema de Gestión{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --florez-primary: #e85a0c;
+            --florez-secondary: #34495e;
+            --florez-light: #f8f9fa;
+            --florez-dark: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--florez-primary) !important;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: var(--florez-light);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: var(--florez-primary);
+            border-color: var(--florez-primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #d04c06;
+            border-color: #d04c06;
+        }
+        
+        .footer {
+            background-color: var(--florez-dark);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Estilos específicos para formularios */
+        .form-section {
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffecb5;
+            color: #856404;
+        }
+        
+        /* Estilos para las secciones de pedido */
+        .seccion-registro,
+        .seccion-despacho,
+        .seccion-pedido {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: white;
+        }
+        
+        /* Estilos para tabla de productos en pedido */
+        .table-productos thead {
+            background-color: var(--florez-light);
+        }
+        
+        /* Estilo personalizado para campos requeridos */
+        .campo-requerido:after {
+            content: " *";
+            color: red;
+        }
+        
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .card-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bread-slice me-2"></i>FlorezCook
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% block pedidos_active %}{% endblock %}" href="/pedidos">
+                            <i class="fas fa-clipboard-list me-1"></i> Nuevo Pedido
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% block reportes_active %}{% endblock %}" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-bar me-1"></i> Reportes
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
+                            <li><a class="dropdown-item" href="/reportes/pedidos"><i class="fas fa-list me-2"></i>Lista de Pedidos</a></li>
+                            <li><a class="dropdown-item" href="/reportes/consolidado-productos"><i class="fas fa-table me-2"></i>Consolidado de Productos</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/pedidos/consolidado"><i class="fas fa-file-export me-2"></i>Exportar Consolidado</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% block productos_active %}{% endblock %}" href="#" id="productosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-box me-1"></i> Productos
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="productosDropdown">
+                            <li><a class="dropdown-item" href="/productos"><i class="fas fa-list me-2"></i>Lista de Productos</a></li>
+                            <li><a class="dropdown-item" href="/importar-productos"><i class="fas fa-file-import me-2"></i>Importar Productos</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% block clientes_active %}{% endblock %}" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-users me-1"></i> Clientes
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
+                            <li><a class="dropdown-item" href="/clientes"><i class="fas fa-list me-2"></i>Lista de Clientes</a></li>
+                            <li><a class="dropdown-item" href="/importar-clientes"><i class="fas fa-file-import me-2"></i>Importar Clientes</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="container my-4">
+        <!-- Sección para mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Contenido específico de la página -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-0">&copy; {{ current_year }} FlorezCook. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript necesarios -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Incluir jQuery para manipulaciones de DOM más sencillas -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- Bloque para scripts específicos de cada página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
