@@ -132,7 +132,7 @@ reset-db:
 	docker-compose down -v
 	docker-compose up -d db
 	@echo "${YELLOW}Esperando a que la base de datos esté lista...${RESET}"
-	@until docker-compose exec -T db mysql -u root -p"$$(grep DB_PASSWORD .env | cut -d '=' -f2)" -e "SELECT 1" > /dev/null 2>&1; do \
+       @until docker-compose exec -T db mysql -u root -p"$$(grep DB_PASS .env | cut -d '=' -f2)" -e "SELECT 1" > /dev/null 2>&1; do \
 		sleep 5; \
 		echo "${YELLOW}Esperando a que la base de datos esté lista...${RESET}"; \
 	done

@@ -55,7 +55,7 @@ steps:
     # and the 'Cloud SQL Instance User' role on the Cloud SQL instance
     env:
       - 'CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=/workspace/key.json'
-    secretEnv: ['DB_PASSWORD']
+    secretEnv: ['DB_PASS']
 
 # Timeout for the build (10 minutes)
 timeout: 600s
@@ -75,7 +75,7 @@ substitutions:
 availableSecrets:
   secretManager:
     - versionName: projects/${PROJECT_ID}/secrets/DB_PASSWORD/versions/latest
-      env: 'DB_PASSWORD'
+      env: 'DB_PASS'
 # [END available_secrets]
 
 # [START artifacts]
@@ -121,7 +121,7 @@ serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/cloud-build@${PROJECT_ID
 secrets:
   - kmsKeyName: projects/${PROJECT_ID}/locations/global/keyRings/my-key-ring/cryptoKeys/my-key
     secretEnv:
-      _DB_PASSWORD: 'projects/123456789012/secrets/DB_PASSWORD/versions/latest'
+      _DB_PASS: 'projects/123456789012/secrets/DB_PASSWORD/versions/latest'
 # [END secrets]
 
 # [START include]
