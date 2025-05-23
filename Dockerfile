@@ -80,12 +80,3 @@ EXPOSE 8080
 # Command to run the application
 CMD ["gunicorn", "--bind", ":8080", "--worker-class", "gthread", "--threads", "2", "main:app"]
 # [END dockerfile]
-
-# Hacer que el puerto 8080 esté disponible para el mundo exterior
-EXPOSE 8080
-
-# Definir la variable de entorno
-ENV NAME FlorezCook
-
-# Ejecutar la aplicación
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app

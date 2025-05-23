@@ -15,7 +15,7 @@ services:
       - FLASK_APP=main.py
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - DATABASE_URL=mysql+pymysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}
+      - DATABASE_URL=mysql+pymysql://${DB_USER}:${DB_PASS}@db:3306/${DB_NAME}
     ports:
       - "8080:8080"
     volumes:
@@ -36,10 +36,10 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASS}
     ports:
       - "3306:3306"
     volumes:
