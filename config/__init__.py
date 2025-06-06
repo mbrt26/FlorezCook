@@ -1,0 +1,1 @@
+# Archivo para hacer que config sea un paquete de Python

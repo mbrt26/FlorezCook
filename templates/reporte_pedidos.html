@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-clipboard-list me-2"></i>Reporte de Pedidos</h2>
         <div>
-            <a href="{{ url_for('exportar_pedidos_excel') }}" class="btn btn-success">
+            <a href="{{ url_for('reportes.exportar_pedidos_excel', **request.args) }}" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i> Exportar a Excel
             </a>
         </div>
@@ -53,7 +53,7 @@
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-filter me-1"></i> Filtrar
                     </button>
-                    <a href="{{ url_for('reporte_pedidos') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('reportes.reporte_pedidos') }}" class="btn btn-secondary">
                         <i class="fas fa-sync-alt"></i>
                     </a>
                 </div>
@@ -91,42 +91,19 @@
                                     {{ pedido.estado_pedido_general }}
                                 </span>
                             </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="{{ url_for('ver_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-info" title="Ver">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-warning" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" 
-                                            data-bs-toggle="modal" data-bs-target="#deleteModal{{ pedido.id }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- Delete Confirmation Modal -->
-                                <div class="modal fade" id="deleteModal{{ pedido.id }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-danger text-white">
-                                                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                ¿Está seguro de que desea eliminar el pedido #{{ pedido.id }}? Esta acción no se puede deshacer.
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                <form action="{{ url_for('eliminar_pedido', pedido_id=pedido.id) }}" method="POST" class="d-inline">
-                                                    <button type="submit" class="btn btn-danger">
-                                                        <i class="fas fa-trash-alt me-1"></i> Eliminar
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <td class="text-center">
+                                <a href="{{ url_for('pedidos.ver', pedido_id=pedido.id) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('pedidos.editar', pedido_id=pedido.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if current_user.is_authenticated and current_user.role == 'superadmin' %}
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal" data-pedido-id="{{ pedido.id }}" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
@@ -144,7 +121,7 @@
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('reporte_pedidos', page=pagination.prev_num, **request.args) }}" aria-label="Anterior">
+                        <a class="page-link" href="{{ url_for('reportes.reporte_pedidos', page=pagination.prev_num, **request.args) }}" aria-label="Anterior">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -154,7 +131,7 @@
                         {% if page_num %}
                             {% if page_num != pagination.page %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('reporte_pedidos', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                <a class="page-link" href="{{ url_for('reportes.reporte_pedidos', page=page_num, **request.args) }}">{{ page_num }}</a>
                             </li>
                             {% else %}
                             <li class="page-item active">
@@ -168,7 +145,7 @@
                     
                     {% if pagination.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('reporte_pedidos', page=pagination.next_num, **request.args) }}" aria-label="Siguiente">
+                        <a class="page-link" href="{{ url_for('reportes.reporte_pedidos', page=pagination.next_num, **request.args) }}" aria-label="Siguiente">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -179,6 +156,30 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -186,6 +187,14 @@
 $(document).ready(function() {
     // Inicializar datepickers
     $('#fecha_desde, #fecha_hasta').attr('max', new Date().toISOString().split('T')[0]);
+});
+
+// Handle delete modal
+$('#deleteModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var pedidoId = button.data('pedido-id');
+    var form = $('#deleteForm');
+    form.attr('action', '{{ url_for("pedidos.eliminar", pedido_id=0) }}'.replace('0', pedidoId));
 });
 </script>
 {% endblock %}

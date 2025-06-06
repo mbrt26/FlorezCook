@@ -2,39 +2,66 @@
 {% block title %}Lista de Pedidos | FlorezCook{% endblock %}
 {% block content %}
 <div class="card">
-    <div class="card-header"><h4 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Pedidos</h4></div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Lista de Pedidos</h4>
+        <a href="{{ url_for('pedidos.form') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nuevo Pedido
+        </a>
+    </div>
     <div class="card-body">
         {% if pedidos %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th>NIT</th>
-                    <th>Estado</th>
-                    <th>Productos</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in pedidos %}
-                <tr>
-                    <td>{{ p.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>{{ p.nombre_cliente_ingresado or (p.cliente_asociado.nombre_comercial if p.cliente_asociado) }}</td>
-                    <td>{{ p.numero_identificacion_cliente_ingresado }}</td>
-                    <td>{{ p.estado_pedido_general }}</td>
-                    <td>
-                        <ul class="mb-0">
-                        {% for item in p.items %}
-                            <li>{{ item.producto_asociado.referencia_de_producto if item.producto_asociado else '' }} ({{ item.cantidad }})</li>
-                        {% endfor %}
-                        </ul>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th># Pedido</th>
+                        <th>Fecha</th>  
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if pedido.cliente_asociado %}
+                                {{ pedido.cliente_asociado.nombre_comercial }}
+                            {% else %}
+                                {{ pedido.nombre_cliente_ingresado or 'N/A' }}
+                            {% endif %}
+                        </td>
+                        <td>{{ pedido.items|length }} item(s)</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if pedido.estado_pedido_general == 'Entregado' else 'warning' if pedido.estado_pedido_general == 'En Proceso' else 'danger' if pedido.estado_pedido_general == 'Cancelado' else 'secondary' }}">
+                                {{ pedido.estado_pedido_general }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('pedidos.ver', pedido_id=pedido.id) }}" class="btn btn-sm btn-success me-1" title="Ver detalles">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <a href="{{ url_for('pedidos.editar', pedido_id=pedido.id) }}" class="btn btn-sm btn-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('pedidos.eliminar', pedido_id=pedido.id) }}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro de eliminar este pedido?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-        <div class="alert alert-info">No hay pedidos registrados.</div>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No hay pedidos registrados.
+        </div>
         {% endif %}
     </div>
 </div>

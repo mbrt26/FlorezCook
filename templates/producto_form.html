@@ -4,7 +4,7 @@
 <div class="card">
     <div class="card-header"><h4 class="mb-0">{{ 'Editar' if modo == 'editar' else 'Agregar' }} Producto</h4></div>
     <div class="card-body">
-        <form method="post">
+        <form method="POST" action="{{ url_for('productos.agregar') if not producto else url_for('productos.editar', producto_id=producto.id) }}">
             <div class="mb-3">
                 <label class="form-label campo-requerido">Código</label>
                 <input type="text" class="form-control" name="codigo" value="{{ producto.codigo if producto else '' }}" required>
@@ -25,9 +25,13 @@
                 <label class="form-label">Línea</label>
                 <input type="text" class="form-control" name="categoria_linea" value="{{ producto.categoria_linea if producto else '' }}">
             </div>
-            <div class="text-end">
-                <a href="{{ url_for('productos_list') }}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('productos.lista') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> {{ 'Actualizar' if producto else 'Guardar' }}
+                </button>
             </div>
         </form>
     </div>

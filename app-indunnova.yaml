@@ -1,0 +1,49 @@
+# Configuración para despliegue en proyecto apps Indunnova
+# Como servicio separado: florezcook
+
+runtime: python311
+
+# Definir como servicio separado
+service: florezcook
+
+# Variables de entorno para el proyecto apps Indunnova
+env_variables:
+  # Application settings
+  FLASK_APP: "main.py"
+  FLASK_ENV: "production"
+  ENV: "production"
+  PYTHONUNBUFFERED: "1"
+  
+  # Database configuration - VALORES ACTUALIZADOS
+  DB_USER: "florezcook_user"
+  DB_PASS: "FlorezCook2025!"
+  DB_NAME: "florezcook_db"
+  DB_HOST: "localhost"
+  DB_SOCKET_DIR: "/cloudsql"
+  CLOUD_SQL_CONNECTION_NAME: "appsindunnova:southamerica-east1:florezcook-instance"
+  
+  # Google Cloud settings
+  GOOGLE_CLOUD_PROJECT: "appsindunnova"
+  
+  # Security
+  SECRET_KEY: "florezcook-production-secret-key-2025"
+
+# Configuración de Cloud SQL - ACTUALIZADO
+beta_settings:
+  cloud_sql_instances: "appsindunnova:southamerica-east1:florezcook-instance"
+
+# Escalado automático para standard environment
+automatic_scaling:
+  min_instances: 1
+  max_instances: 3
+  target_cpu_utilization: 0.7
+
+# Manejo de rutas
+handlers:
+- url: /static
+  static_dir: static
+  secure: always
+
+- url: /.*
+  secure: always
+  script: auto

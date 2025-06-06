@@ -3,49 +3,29 @@ import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
-# Configuración de la base de datos
-is_production = os.environ.get('FLASK_ENV') == 'production'
-if is_production:
-    from firebase_admin import firestore
-    import firebase_admin
-    from firebase_admin import credentials
-
-    # Inicializar Firebase Admin (asumiendo que las credenciales se configurarán en tiempo de ejecución)
-    cred = credentials.ApplicationDefault()
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-else:
-    # SQLite para desarrollo local
-    DATABASE_URL = "sqlite:///florez_cook.db"
-    engine = create_engine(DATABASE_URL)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from flask_login import UserMixin
 
 Base = declarative_base()
-
-def access_secret(secret_id):
-    """Función para acceder a secretos (placeholder)"""
-    pass
 
 class Cliente(Base):
     __tablename__ = "clientes"
 
     id = Column(Integer, primary_key=True, index=True)
-    nombre_comercial = Column(String, nullable=False)
-    razon_social = Column(String, nullable=False)
-    tipo_identificacion = Column(String, nullable=False) # "NIT", "Cedula Ciudadania", "Cedula Extranjería"
-    numero_identificacion = Column(String, unique=True, nullable=False, index=True)
-    email = Column(String, nullable=False)
-    telefono = Column(String, nullable=False)
-    direccion = Column(String, nullable=False)
-    ciudad = Column(String, nullable=False)
-    departamento = Column(String, nullable=False)
+    nombre_comercial = Column(String(255), nullable=False)
+    razon_social = Column(String(255), nullable=False)
+    tipo_identificacion = Column(String(50), nullable=False) # "NIT", "Cedula Ciudadania", "Cedula Extranjería"
+    numero_identificacion = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(255), nullable=False)
+    telefono = Column(String(50), nullable=False)
+    direccion = Column(String(500), nullable=False)
+    ciudad = Column(String(100), nullable=False)
+    departamento = Column(String(100), nullable=False)
 
     # Campos de Dirección desglosados de Zoho
-    direccion_linea1 = Column(String)
-    direccion_linea2 = Column(String, nullable=True)
-    direccion_codigo_postal = Column(String, nullable=True)
-    direccion_pais = Column(String) # En Zoho es un campo, aquí lo mantenemos
+    direccion_linea1 = Column(String(255))
+    direccion_linea2 = Column(String(255), nullable=True)
+    direccion_codigo_postal = Column(String(20), nullable=True)
+    direccion_pais = Column(String(100)) # En Zoho es un campo, aquí lo mantenemos
     direccion_latitud = Column(Float, nullable=True)
     direccion_longitud = Column(Float, nullable=True)
 
@@ -73,11 +53,11 @@ class Producto(Base):
     __tablename__ = "productos"
 
     id = Column(Integer, primary_key=True, index=True)
-    codigo = Column(String, unique=True, nullable=False)
-    referencia_de_producto = Column(String, nullable=False)
+    codigo = Column(String(100), unique=True, nullable=False)
+    referencia_de_producto = Column(String(255), nullable=False)
     gramaje_g = Column(Float, nullable=False)
-    formulacion_grupo = Column(String) # Picklist de Zoho: "BAGEL TRADICIONAL", "BAGEL INTEGRAL", etc.
-    categoria_linea = Column(String) # Picklist de Zoho: "Laminados", "Maquila", etc.
+    formulacion_grupo = Column(String(100)) # Picklist de Zoho: "BAGEL TRADICIONAL", "BAGEL INTEGRAL", etc.
+    categoria_linea = Column(String(100)) # Picklist de Zoho: "Laminados", "Maquila", etc.
     descripcion = Column(Text)  # Cambiado de LONGTEXT a Text para compatibilidad con SQLite
     precio_unitario = Column(Float, default=0)
     unidad_medida = Column(String(50), default='unidad')
@@ -99,8 +79,8 @@ class Pedido(Base):
     
     # Información del cliente tal como se ingresó/buscó en el formulario de pedido de Zoho
     # Esto es importante para replicar la lógica de "Paso 2. Lógica Principal"
-    numero_identificacion_cliente_ingresado = Column(String, index=True) 
-    nombre_cliente_ingresado = Column(String, nullable=True) # Puede ser "Su Empresa" inicialmente o el nombre del cliente nuevo
+    numero_identificacion_cliente_ingresado = Column(String(50), index=True) 
+    nombre_cliente_ingresado = Column(String(255), nullable=True) # Puede ser "Su Empresa" inicialmente o el nombre del cliente nuevo
 
     # FK al cliente registrado (si existe o se crea durante el proceso del pedido)
     # Es nullable=True porque un pedido podría iniciar sin un cliente formalmente en la tabla Clientes
@@ -111,17 +91,17 @@ class Pedido(Base):
     alerta = Column(Text, nullable=True) # Campo Alerta del formulario Pedidos de Zoho
 
     # Sección de Despacho del formulario Pedidos de Zoho
-    despacho_tipo = Column(String) # Picklist: "DOMICILIO", "RECOGER EN PLANTA", "FLOTA"
-    despacho_sede = Column(String, nullable=True)
+    despacho_tipo = Column(String(50)) # Picklist: "DOMICILIO", "RECOGER EN PLANTA", "FLOTA"
+    despacho_sede = Column(String(100), nullable=True)
     # Dirección de Entrega (puede ser diferente a la del cliente)
-    direccion_entrega = Column(String, nullable=True)
-    ciudad_entrega = Column(String, nullable=True)
-    departamento_entrega = Column(String, nullable=True)
-    despacho_horario_atencion = Column(String, nullable=True)
+    direccion_entrega = Column(String(500), nullable=True)
+    ciudad_entrega = Column(String(100), nullable=True)
+    departamento_entrega = Column(String(100), nullable=True)
+    despacho_horario_atencion = Column(String(100), nullable=True)
     observaciones_despacho = Column(Text, nullable=True) # Campo Observaciones de la sección Despacho
     
     ESTADOS_PEDIDO = ["En Proceso", "Programado", "Anulado", "Entregado", "Facturado"]
-    estado_pedido_general = Column(String, default="En Proceso") # Picklist: "En Proceso", "Programado", "Anulado", "Entregado", "Facturado"
+    estado_pedido_general = Column(String(50), default="En Proceso") # Picklist: "En Proceso", "Programado", "Anulado", "Entregado", "Facturado"
 
     # Relación con PedidoProducto (los items del pedido)
     # cascade="all, delete-orphan" significa que si se borra un Pedido, se borran sus items asociados
@@ -143,12 +123,12 @@ class PedidoProducto(Base): # Representa los items del subformulario "Pedido" en
     cantidad = Column(Float, nullable=False, default=0)
     gramaje_g_item = Column(Float) # Se copiará de Productos.Gramaje_g
     peso_total_g_item = Column(Float) # Se calculará: Cantidad * Gramaje_g_item
-    grupo_item = Column(String) # Se copiará de Productos.Formulacion (Grupo)
-    linea_item = Column(String) # Se copiará de Productos.Categoria (Linea)
+    grupo_item = Column(String(100)) # Se copiará de Productos.Formulacion (Grupo)
+    linea_item = Column(String(100)) # Se copiará de Productos.Categoria (Linea)
     
     observaciones_item = Column(Text, nullable=True) # "Observaciones" del subformulario
     fecha_de_entrega_item = Column(Date, nullable=False) # "Fecha de Entrega" del subformulario
-    estado_del_pedido_item = Column(String) # "Estado del Pedido" del subformulario, puede heredar del pedido principal o ser específico
+    estado_del_pedido_item = Column(String(50)) # "Estado del Pedido" del subformulario, puede heredar del pedido principal o ser específico
 
     # Relaciones
     pedido_asociado = relationship("Pedido", back_populates="items")
@@ -157,19 +137,22 @@ class PedidoProducto(Base): # Representa los items del subformulario "Pedido" en
     def __repr__(self):
         return f"<PedidoProducto(id={self.id}, pedido_id={self.pedido_id}, producto_id={self.producto_id}, cantidad={self.cantidad})>"
 
-# --- Función para crear la base de datos y las tablas ---
-def crear_base_de_datos():
-    engine = create_engine(DATABASE_URL)
-    Base.metadata.create_all(bind=engine) # Crea las tablas si no existen
-    print(f"Base de datos '{DATABASE_URL}' y tablas creadas si no existían.")
+class User(UserMixin):
+    def __init__(self, id, role='user'):
+        self.id = id
+        self.role = role
 
-if __name__ == "__main__":
-    crear_base_de_datos()
-    
-    # Ejemplo de cómo podrías iniciar una sesión para interactuar con la BD (esto iría en tu lógica de app)
-    # engine = create_engine(DATABASE_URL)
-    # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    # db = SessionLocal()
-    # print("Sesión de base de datos lista para usar (ejemplo).")
-    # # Aquí podrías añadir objetos, consultarlos, etc.
-    # db.close()
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)

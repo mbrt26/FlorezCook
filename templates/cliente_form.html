@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Editar' if modo == 'editar' else 'Agregar' }} Cliente | FlorezCook{% endblock %}
+{% block title %}{{ 'Agregar' if modo == 'agregar' else 'Editar' }} Cliente | FlorezCook{% endblock %}
 
 {% block content %}
 <div class="card">
@@ -86,8 +86,10 @@
                 </div>
             </div>
             <div class="text-end">
-                <a href="{{ url_for('clientes_list') }}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Guardar
+                </button>
+                <a href="{{ url_for('clientes.lista') }}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
