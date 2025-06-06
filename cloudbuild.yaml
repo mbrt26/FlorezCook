@@ -1,54 +1,66 @@
-# Cloud Build configuration for FlorezCook
-# This file defines the build steps for deploying the application to Google Cloud Platform
+# Configuración de Cloud Build para FlorezCook
+# Este archivo define los pasos de construcción para implementar la aplicación en Google Cloud Platform
 
-# [START cloudbuild_yaml]
 steps:
-  # Step 1: Install Python dependencies
-  - name: 'python:3.9'
+  # Paso 1: Instalar dependencias de Python
+  - name: 'python:3.11'
     id: 'install-dependencies'
-    entrypoint: pip
-    args: ['install', '-r', 'requirements.txt', '-t', 'lib', '--upgrade']
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -t lib --upgrade
+        # Instalar dependencias para el sistema operativo
+        apt-get update && apt-get install -y \
+            build-essential \
+            libssl-dev \
+            libffi-dev \
+            python3-dev \
+            libmysqlclient-dev
     waitFor: ['-']
-    # Cache pip packages between builds for faster builds
+    # Usar caché para acelerar las construcciones
     volumes:
       - name: 'pip-cache'
         path: '/root/.cache/pip'
 
-  # Step 2: Run unit tests (optional)
-  # - name: 'python:3.9'
+  # Paso 2: Ejecutar pruebas (opcional)
+  # - name: 'python:3.11'
   #   id: 'run-tests'
-  #   entrypoint: python
-  #   args: ['-m', 'pytest', 'tests/']
-  #   waitFor: ['install-dependencies']
+  #   entrypoint: bash
+  #   args: ['-c', 'python -m pytest tests/']
   #   env:
-  #     - 'DB_USER=${_DB_USER}'
-  #     - 'DB_PASS=${_DB_PASS}'
-  #     - 'DB_NAME=${_DB_NAME}'
-  #     - 'CLOUD_SQL_CONNECTION_NAME=${_CLOUD_SQL_CONNECTION_NAME}'
-
-  # Step 3: Run database migrations (if using Alembic)
-  # - name: 'python:3.9'
-  #   id: 'run-migrations'
-  #   entrypoint: python
-  #   args: ['-m', 'alembic', 'upgrade', 'head']
-  #   env:
-  #     - 'DB_USER=${_DB_USER}'
-  #     - 'DB_PASS=${_DB_PASS}'
-  #     - 'DB_NAME=${_DB_NAME}'
-  #     - 'CLOUD_SQL_CONNECTION_NAME=${_CLOUD_SQL_CONNECTION_NAME}'
+  #     - 'FLASK_APP=main.py'
+  #     - 'FLASK_ENV=testing'
   #   waitFor: ['install-dependencies']
 
-  # Step 4: Deploy to App Engine
+  # Paso 3: Desplegar en App Engine Flexible
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'deploy-app'
+    entrypoint: bash
     args:
-      - 'app'
-      - 'deploy'
-      - '--appyaml=app.yaml'
-      - '--project=${PROJECT_ID}'
-      - '--version=${SHORT_SHA}'
-      - '--promote'
-      - '--quiet'
+      - '-c'
+      - |
+        # Configurar el proyecto de GCP
+        gcloud config set project ${PROJECT_ID}
+        
+        # Habilitar las APIs necesarias
+        gcloud services enable appengineflex.googleapis.com
+        gcloud services enable sqladmin.googleapis.com
+        
+        # Desplegar la aplicación
+        gcloud app deploy \
+          app.yaml \
+          --project=${PROJECT_ID} \
+          --version=${SHORT_SHA} \
+          --promote \
+          --quiet
+    # Variables de entorno para la autenticación
+    env:
+      - 'CLOUDSDK_CORE_DISABLE_PROMPTS=1'
+    # Tiempo de espera más largo para el despliegue
+    timeout: 1200s  # 20 minutos
+    waitFor: ['install-dependencies']
     waitFor: ['install-dependencies']
     # Allow the Cloud Build service account to access Cloud SQL
     # Make sure the Cloud Build service account has the 'Cloud SQL Client' role

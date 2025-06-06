@@ -82,37 +82,64 @@
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
+                            <th>Cliente</th>
                             <th>Categoría</th>
                             <th>Formulación</th>
                             <th>Referencia de Producto</th>
                             <th># Pedido</th>
-                            <th>Observaciones</th>
                             <th class="text-end">Cantidad</th>
                             <th class="text-end">Peso Total (g)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in resultados %}
-                        <tr>
-                            <td>{{ item.categoria or '-' }}</td>
-                            <td>{{ item.formulacion or '-' }}</td>
-                            <td>{{ item.referencia or '-' }}</td>
-                            <td>{{ item.pedido_id }}</td>
-                            <td>{{ item.observaciones or '-' }}</td>
-                            <td class="text-end">{{ "%0.2f"|format(item.total_cantidad) }}</td>
-                            <td class="text-end">{{ "%0.2f"|format(item.total_peso) }}</td>
-                        </tr>
+                        {% if resultados_agrupados %}
+                            {% for formulacion, items in resultados_agrupados.items() %}
+                                <!-- Encabezado de Formulación -->
+                                <tr class="table-info">
+                                    <td colspan="7" class="fw-bold">
+                                        <i class="fas fa-flask me-2"></i>{{ formulacion }}
+                                    </td>
+                                </tr>
+                                
+                                <!-- Items de la formulación -->
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.cliente_nombre }} ({{ item.cliente_nit }})</td>
+                                    <td>{{ item.categoria or '-' }}</td>
+                                    <td>{{ item.formulacion or '-' }}</td>
+                                    <td>{{ item.referencia or '-' }}</td>
+                                    <td>{{ item.pedido_id }}</td>
+                                    <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
+                                    <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
+                                </tr>
+                                {% endfor %}
+                                
+                                <!-- Subtotal de Formulación -->
+                                <tr class="table-warning">
+                                    <td colspan="5" class="text-end fw-bold">
+                                        <i class="fas fa-calculator me-1"></i>Subtotal {{ formulacion }}:
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        {{ "%0.2f"|format(subtotales_formulacion[formulacion].cantidad) }}
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        {{ "%0.2f"|format(subtotales_formulacion[formulacion].peso) }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center">No se encontraron resultados con los filtros seleccionados</td>
-                        </tr>
-                        {% endfor %}
+                            <tr>
+                                <td colspan="7" class="text-center">No se encontraron resultados con los filtros seleccionados</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot class="table-secondary">
                         <tr>
-                            <th colspan="5" class="text-end">TOTALES:</th>
-                            <th class="text-end">{{ "%0.2f"|format(total_cantidad) }}</th>
-                            <th class="text-end">{{ "%0.2f"|format(total_peso) }}</th>
+                            <th colspan="5" class="text-end">
+                                <i class="fas fa-sum me-1"></i>TOTALES GENERALES:
+                            </th>
+                            <th class="text-end">{{ "%0.2f"|format(total_cantidad or 0) }}</th>
+                            <th class="text-end">{{ "%0.2f"|format(total_peso or 0) }}</th>
                         </tr>
                     </tfoot>
                 </table>

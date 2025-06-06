@@ -149,13 +149,19 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label campo-requerido">Estado del Pedido</label>
-                                <select class="form-select" name="estado_pedido_general">
-                                    <option value="En Proceso" {% if form_data.estado_pedido_general == 'En Proceso' %}selected{% endif %}>En Proceso</option>
-                                    <option value="Entregado" {% if form_data.estado_pedido_general == 'Entregado' %}selected{% endif %}>Entregado</option>
-                                    <option value="Pagado" {% if form_data.estado_pedido_general == 'Pagado' %}selected{% endif %}>Pagado</option>
-                                    <option value="Entregado y Pagado" {% if form_data.estado_pedido_general == 'Entregado y Pagado' %}selected{% endif %}>Entregado y Pagado</option>
+                                <label class="form-label">Estado del Pedido</label>
+                                <select class="form-select" name="estado_pedido_general" disabled>
+                                    <option value="En Proceso" selected>En Proceso</option>
+                                    <option value="Entregado">Entregado</option>
+                                    <option value="Pagado">Pagado</option>
+                                    <option value="Entregado y Pagado">Entregado y Pagado</option>
                                 </select>
+                                <!-- Campo oculto para enviar el valor al servidor -->
+                                <input type="hidden" name="estado_pedido_general" value="En Proceso">
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Los nuevos pedidos siempre inician en estado "En Proceso"
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -201,12 +207,14 @@
                                     <td><input type="date" class="form-control" name="fecha_de_entrega_item_{{ loop.index0 }}" value="{{ item.fecha_de_entrega_item }}"></td>
                                     <td><input type="text" class="form-control" name="observaciones_item_{{ loop.index0 }}" value="{{ item.observaciones_item }}"></td>
                                     <td>
-                                        <select class="form-select" name="estado_del_pedido_item_{{ loop.index0 }}">
+                                        <select class="form-select" name="estado_del_pedido_item_{{ loop.index0 }}" disabled>
+                                            <option value="En Proceso" selected>En Proceso</option>
                                             <option value="Pendiente" {% if item.estado_del_pedido_item == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                            <option value="En Proceso" {% if item.estado_del_pedido_item == 'En Proceso' %}selected{% endif %}>En Proceso</option>
                                             <option value="Entregado" {% if item.estado_del_pedido_item == 'Entregado' %}selected{% endif %}>Entregado</option>
                                             <option value="Pagado" {% if item.estado_del_pedido_item == 'Pagado' %}selected{% endif %}>Pagado</option>
                                         </select>
+                                        <!-- Campo oculto para enviar el valor al servidor -->
+                                        <input type="hidden" name="estado_del_pedido_item_{{ loop.index0 }}" value="En Proceso">
                                     </td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm remove-item" data-index="{{ loop.index0 }}"><i class="fas fa-trash"></i></button>
@@ -236,6 +244,7 @@
 $(document).ready(function() {
     // Declarar la variable productos con los datos del template
     const productos = JSON.parse(`{{ productos|tojson|safe }}`);
+    
     // Función para validar cliente
     function validarCliente() {
         const nit = $('#numero_identificacion_cliente_ingresado').val().trim();
@@ -256,6 +265,8 @@ $(document).ready(function() {
                     // Actualizar la información del cliente
                     $('#infoCliente').html(clienteInfo);
                     $('#cliente_id').val(data.id);
+                    $('#nombreClienteMostrado').text(data.nombre_comercial);
+                    $('#nombre_cliente_ingresado').val(data.nombre_comercial);
                     
                     // Prellenar campos de dirección
                     $('input[name="direccion_entrega"]').val(data.direccion);
@@ -320,6 +331,13 @@ $(document).ready(function() {
             window.location.href = `/clientes/editar/${$('#cliente_id').val()}?redirect_to=pedidos`;
         }
     });
+
+    // Manejar clic en el botón de cambiar cliente
+    $('#cambiarCliente').click(function() {
+        $('#pedidoForm').addClass('d-none');
+        $('#paso1').slideDown();
+        $('#numero_identificacion_cliente_ingresado').val('').focus();
+    });
     
     // Lógica para agregar/quitar filas de productos
     let itemIndex = 0;
@@ -329,11 +347,6 @@ $(document).ready(function() {
     itemIndex = {{ form_data.pedido_items|length }};
     {% endif %}
     
-    // Función para agregar una nueva fila de producto
-    function agregarFilaProducto() {
-        // Implementación de la función
-    }
-
     // Función para sumar 2 días hábiles a una fecha
     function sumarDiasHabiles(fecha, dias) {
         let resultado = new Date(fecha);
@@ -377,12 +390,14 @@ $(document).ready(function() {
             <td><input type="date" class="form-control" name="fecha_de_entrega_item_${itemIndex}"></td>
             <td><input type="text" class="form-control" name="observaciones_item_${itemIndex}"></td>
             <td>
-                <select class="form-select" name="estado_del_pedido_item_${itemIndex}">
+                <select class="form-select" name="estado_del_pedido_item_${itemIndex}" disabled>
+                    <option value="En Proceso" selected>En Proceso</option>
                     <option value="Pendiente">Pendiente</option>
-                    <option value="En Proceso">En Proceso</option>
                     <option value="Entregado">Entregado</option>
                     <option value="Pagado">Pagado</option>
                 </select>
+                <!-- Campo oculto para enviar el valor al servidor -->
+                <input type="hidden" name="estado_del_pedido_item_${itemIndex}" value="En Proceso">
             </td>
             <td>
                 <button type="button" class="btn btn-danger btn-sm remove-item" data-index="${itemIndex}"><i class="fas fa-trash"></i></button>

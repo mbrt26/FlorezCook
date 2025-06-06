@@ -45,8 +45,12 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="despacho_tipo" class="form-label">Tipo de Despacho</label>
-                            <input type="text" class="form-control" id="despacho_tipo" name="despacho_tipo" 
-                                   value="{{ pedido.despacho_tipo or '' }}">
+                            <select class="form-select" id="despacho_tipo" name="despacho_tipo">
+                                <option value="">Seleccione...</option>
+                                <option value="DOMICILIO" {% if pedido.despacho_tipo == 'DOMICILIO' %}selected{% endif %}>DOMICILIO</option>
+                                <option value="RECOGER EN PLANTA" {% if pedido.despacho_tipo == 'RECOGER EN PLANTA' %}selected{% endif %}>RECOGER EN PLANTA</option>
+                                <option value="FLOTA" {% if pedido.despacho_tipo == 'FLOTA' %}selected{% endif %}>FLOTA</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="direccion_entrega" class="form-label">Dirección de Entrega</label>
@@ -307,9 +311,6 @@ $(document).ready(function() {
             }
         }
     });
-    
-    // Initialize date pickers
-    $('input[type="date"]').attr('max', new Date().toISOString().split('T')[0]);
 });
 </script>
 {% endblock %}

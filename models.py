@@ -1,11 +1,31 @@
+import os
 import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-DATABASE_URL = "sqlite:///florez_cook.db" # El archivo de la base de datos se creará en la misma carpeta
+# Configuración de la base de datos
+is_production = os.environ.get('FLASK_ENV') == 'production'
+if is_production:
+    from firebase_admin import firestore
+    import firebase_admin
+    from firebase_admin import credentials
+
+    # Inicializar Firebase Admin (asumiendo que las credenciales se configurarán en tiempo de ejecución)
+    cred = credentials.ApplicationDefault()
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+else:
+    # SQLite para desarrollo local
+    DATABASE_URL = "sqlite:///florez_cook.db"
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+def access_secret(secret_id):
+    """Función para acceder a secretos (placeholder)"""
+    pass
 
 class Cliente(Base):
     __tablename__ = "clientes"
@@ -58,6 +78,12 @@ class Producto(Base):
     gramaje_g = Column(Float, nullable=False)
     formulacion_grupo = Column(String) # Picklist de Zoho: "BAGEL TRADICIONAL", "BAGEL INTEGRAL", etc.
     categoria_linea = Column(String) # Picklist de Zoho: "Laminados", "Maquila", etc.
+    descripcion = Column(Text)  # Cambiado de LONGTEXT a Text para compatibilidad con SQLite
+    precio_unitario = Column(Float, default=0)
+    unidad_medida = Column(String(50), default='unidad')
+    estado = Column(String(50), default='Activo')
+    fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)
+    fecha_modificacion = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     # Relación con PedidoProducto: Un producto puede estar en muchos items de pedido
     items_pedido = relationship("PedidoProducto", back_populates="producto_asociado")

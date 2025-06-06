@@ -48,19 +48,41 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-12 mb-3">
                     <label class="form-label campo-requerido">Dirección</label>
                     <input type="text" class="form-control" name="direccion" value="{{ cliente.direccion if cliente else '' }}" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label campo-requerido">Ciudad</label>
-                    <input type="text" class="form-control" name="ciudad" value="{{ cliente.ciudad if cliente else '' }}" required>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label campo-requerido">Departamento</label>
-                    <input type="text" class="form-control" name="departamento" value="{{ cliente.departamento if cliente else '' }}" required>
+                    <select class="form-select" name="departamento" id="departamento" required onchange="actualizarCiudades()">
+                        <option value="">Seleccione un departamento...</option>
+                        {% for departamento in departamentos_ciudades.keys() | sort %}
+                            <option value="{{ departamento }}" {{ 'selected' if cliente and cliente.departamento == departamento else '' }}>
+                                {{ departamento }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Ciudad</label>
+                    <div class="position-relative">
+                        <input type="text" 
+                               class="form-control" 
+                               name="ciudad" 
+                               id="ciudad-input" 
+                               value="{{ cliente.ciudad if cliente else '' }}" 
+                               placeholder="Seleccione o digite su ciudad..."
+                               required
+                               autocomplete="off"
+                               oninput="filtrarCiudades()"
+                               onfocus="mostrarListaCiudades()"
+                               onblur="ocultarListaCiudades()">
+                        <div id="lista-ciudades" class="dropdown-menu position-absolute w-100" style="display: none; max-height: 200px; overflow-y: auto; z-index: 1000;">
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">Puede seleccionar de la lista o escribir el nombre de su ciudad</small>
                 </div>
             </div>
             <div class="text-end">
@@ -70,4 +92,146 @@
         </form>
     </div>
 </div>
+
+<script>
+// Datos de departamentos y ciudades
+const departamentosCiudades = {{ departamentos_ciudades | tojson }};
+let ciudadesActuales = [];
+let timeoutOcultar = null;
+
+function actualizarCiudades() {
+    const departamentoSelect = document.getElementById('departamento');
+    const ciudadInput = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    const departamentoSeleccionado = departamentoSelect.value;
+    
+    // Limpiar el input de ciudad
+    ciudadInput.value = '';
+    listaCiudades.innerHTML = '';
+    listaCiudades.style.display = 'none';
+    
+    if (departamentoSeleccionado && departamentosCiudades[departamentoSeleccionado]) {
+        ciudadesActuales = departamentosCiudades[departamentoSeleccionado];
+        ciudadInput.placeholder = 'Seleccione o digite su ciudad...';
+        ciudadInput.disabled = false;
+    } else {
+        ciudadesActuales = [];
+        ciudadInput.placeholder = 'Seleccione primero un departamento...';
+        ciudadInput.disabled = true;
+    }
+}
+
+function filtrarCiudades() {
+    const input = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    const valorInput = input.value.toLowerCase();
+    
+    if (ciudadesActuales.length === 0) {
+        listaCiudades.style.display = 'none';
+        return;
+    }
+    
+    // Filtrar ciudades que coincidan con el texto ingresado
+    const ciudadesFiltradas = ciudadesActuales.filter(ciudad => 
+        ciudad.toLowerCase().includes(valorInput)
+    );
+    
+    // Mostrar lista solo si hay texto y coincidencias
+    if (valorInput.length > 0 && ciudadesFiltradas.length > 0) {
+        mostrarListaCiudadesFiltradas(ciudadesFiltradas);
+    } else if (valorInput.length === 0) {
+        mostrarListaCiudadesFiltradas(ciudadesActuales);
+    } else {
+        listaCiudades.style.display = 'none';
+    }
+}
+
+function mostrarListaCiudadesFiltradas(ciudades) {
+    const listaCiudades = document.getElementById('lista-ciudades');
+    listaCiudades.innerHTML = '';
+    
+    ciudades.forEach(function(ciudad) {
+        const item = document.createElement('a');
+        item.className = 'dropdown-item';
+        item.href = '#';
+        item.textContent = ciudad;
+        item.onclick = function(e) {
+            e.preventDefault();
+            seleccionarCiudad(ciudad);
+        };
+        item.onmousedown = function(e) {
+            e.preventDefault(); // Prevenir que se active onblur antes que onclick
+        };
+        listaCiudades.appendChild(item);
+    });
+    
+    listaCiudades.style.display = 'block';
+}
+
+function mostrarListaCiudades() {
+    if (timeoutOcultar) {
+        clearTimeout(timeoutOcultar);
+        timeoutOcultar = null;
+    }
+    
+    if (ciudadesActuales.length > 0) {
+        const input = document.getElementById('ciudad-input');
+        if (input.value.length === 0) {
+            mostrarListaCiudadesFiltradas(ciudadesActuales);
+        } else {
+            filtrarCiudades();
+        }
+    }
+}
+
+function ocultarListaCiudades() {
+    timeoutOcultar = setTimeout(function() {
+        const listaCiudades = document.getElementById('lista-ciudades');
+        listaCiudades.style.display = 'none';
+    }, 200); // Pequeño retraso para permitir clicks en la lista
+}
+
+function seleccionarCiudad(ciudad) {
+    const ciudadInput = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    
+    ciudadInput.value = ciudad;
+    listaCiudades.style.display = 'none';
+}
+
+// Inicializar ciudades si hay un departamento seleccionado al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const departamentoSelect = document.getElementById('departamento');
+    if (departamentoSelect.value) {
+        actualizarCiudades();
+        // Si estamos editando, mantener la ciudad seleccionada
+        {% if cliente and cliente.ciudad %}
+            document.getElementById('ciudad-input').value = '{{ cliente.ciudad }}';
+        {% endif %}
+    }
+});
+</script>
+
+<style>
+.dropdown-menu {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+    padding: 0.375rem 0.75rem;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #e9ecef;
+}
+
+#ciudad-input:focus + #lista-ciudades {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+</style>
 {% endblock %}

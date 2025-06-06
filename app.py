@@ -6,30 +6,87 @@ from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
 from sqlalchemy.sql import func as sql_func
 from models import Base, Producto, Cliente, Pedido, PedidoProducto
 import business_logic
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pandas as pd
 from io import BytesIO
 from dotenv import load_dotenv
-import pymysql
 
 # Cargar variables de entorno
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'florezcook-secret-key')
+
+# Configurar la clave secreta de Flask (usar variable local por defecto)
+app.secret_key = os.getenv('SECRET_KEY', 'clave-desarrollo-local-florez-cook-2024')
+
+# Función placeholder para compatibilidad
+def access_secret(secret_id):
+    """Función placeholder para desarrollo local"""
+    if secret_id == 'florezcook-secret-key':
+        return os.getenv('SECRET_KEY', 'clave-desarrollo-local-florez-cook-2024')
+    elif secret_id == 'florezcook-db-password':
+        return os.getenv('DB_PASS', '')
+    elif secret_id == 'cloud-sql-connection':
+        return os.getenv('CLOUD_SQL_CONNECTION_NAME', '')
+    return None
+
+# Health check endpoints
+@app.route('/healthz')
+def liveness():
+    try:
+        # Verificar la conexión a la base de datos
+        db = SessionLocal()
+        db.execute('SELECT 1')
+        db.remove()
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        app.logger.error(f"Health check failed: {e}")
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+@app.route('/readiness')
+def readiness():
+    try:
+        # Verificar la conexión a la base de datos
+        db = SessionLocal()
+        db.execute('SELECT 1')
+        db.remove()
+        # Aquí podrías agregar más verificaciones si son necesarias
+        return jsonify({"status": "ready"}), 200
+    except Exception as e:
+        app.logger.error(f"Readiness check failed: {e}")
+        return jsonify({"status": "not ready", "error": str(e)}), 503
 
 # Configuración de la base de datos
 def get_db_engine():
     """Configura y devuelve un motor de SQLAlchemy para la base de datos."""
-    db_user = os.environ.get('DB_USER', 'root')
-    db_pass = os.environ.get('DB_PASS', '')
-    db_name = os.environ.get('DB_NAME', 'your_database_name')
-    db_host = os.environ.get('DB_HOST', 'localhost')
-    
-    # Si estamos en producción, usamos Cloud SQL
-    if os.getenv('ENV') == 'production':
-        try:
-            # Para producción en App Engine, usamos la conexión Unix socket
+    try:
+        # Verificar si se debe usar SQLite
+        use_sqlite = os.getenv('USE_SQLITE', 'true').lower() == 'true'
+        
+        if use_sqlite or os.getenv('FLASK_ENV') == 'development':
+            # SQLite para desarrollo local
+            database_url = os.getenv('DATABASE_URL', 'sqlite:///florez_cook.db')
+            app.logger.info(f"Conectando a SQLite: {database_url}")
+            
+            engine = create_engine(
+                database_url,
+                pool_pre_ping=True,
+                echo=False  # Cambiar a True para ver las consultas SQL
+            )
+            
+        elif os.getenv('FLASK_ENV') == 'production':
+            # Configuración para producción (MySQL/Cloud SQL)
+            db_user = os.environ.get('DB_USER', 'root')
+            db_pass = access_secret('florezcook-db-password')
+            db_name = os.environ.get('DB_NAME', 'florezcook_db')
+            
+            # Para producción en Cloud SQL, usamos la conexión Unix socket
+            db_socket_dir = os.environ.get("DB_SOCKET_DIR", "/cloudsql")
+            cloud_sql_connection_name = access_secret('cloud-sql-connection')
+            
+            if not cloud_sql_connection_name:
+                raise ValueError("No se pudo obtener la conexión a Cloud SQL")
+                
             db_config = {
                 'pool_size': 5,
                 'max_overflow': 2,
@@ -38,46 +95,54 @@ def get_db_engine():
                 'pool_pre_ping': True
             }
             
-            # Construir la URL de conexión para Cloud SQL
-            db_socket_dir = os.environ.get("DB_SOCKET_DIR", "/cloudsql")
-            cloud_sql_connection_name = os.environ["CLOUD_SQL_CONNECTION_NAME"]
-            
             db_url = f"mysql+pymysql://{db_user}:{db_pass}@/{db_name}?" \
                      f"unix_socket={db_socket_dir}/{cloud_sql_connection_name}"
             
+            app.logger.info("Conectando a Cloud SQL...")
             engine = create_engine(db_url, **db_config)
             
-            # Verificar la conexión
-            with engine.connect() as conn:
-                conn.execute("SELECT 1")
-                
-            return engine
+        else:
+            # Configuración para desarrollo local con MySQL (opcional)
+            db_user = os.environ.get('DB_USER', 'root')
+            db_pass = os.environ.get('DB_PASS', '')
+            db_name = os.environ.get('DB_NAME', 'florezcook_db')
+            db_host = os.environ.get('DB_HOST', 'localhost')
             
-        except Exception as e:
-            print(f"Error al conectar a Cloud SQL: {e}")
-            raise
-    else:
-        # Configuración para desarrollo local
-        db_url = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}"
-        db_config = {
-            'pool_size': 5,
-            'max_overflow': 2,
-            'pool_timeout': 30,
-            'pool_recycle': 1800,
-            'pool_pre_ping': True
-        }
-        return create_engine(db_url, **db_config)
+            db_url = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}"
+            db_config = {
+                'pool_size': 5,
+                'max_overflow': 2,
+                'pool_timeout': 30,
+                'pool_recycle': 1800,
+                'pool_pre_ping': True
+            }
+            
+            app.logger.info("Conectando a MySQL local...")
+            engine = create_engine(db_url, **db_config)
+        
+        # Verificar la conexión
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+            app.logger.info("Conexión a la base de datos establecida correctamente")
+        
+        return engine
+        
+    except Exception as e:
+        app.logger.error(f"Error al configurar la conexión a la base de datos: {e}")
+        raise
 
 # Configurar el motor de la base de datos
+print("LOG: app.py - Configurando el motor de la base de datos globalmente...")
 try:
     engine = get_db_engine()
+    print(f"LOG: app.py - Engine global configurado: {engine}")
     print("Conexión a la base de datos establecida correctamente")
 except Exception as e:
-    print(f"Error al conectar a la base de datos: {e}")
+    print(f"LOG: app.py - ERROR al configurar engine global: {e}")
     engine = None
 
 # Crear tablas si no existen
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine) # Comentado para que la inicialización la controle create_app
 
 # Configurar la sesión de SQLAlchemy
 SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
@@ -400,7 +465,8 @@ def agregar_cliente():
                                 current_year=current_year, 
                                 modo='agregar',
                                 nit_default=nit, 
-                                redirect_to=redirect_to)
+                                redirect_to=redirect_to,
+                                departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
         
         try:
             # Crear el nuevo cliente
@@ -434,7 +500,8 @@ def agregar_cliente():
                          current_year=current_year, 
                          modo='agregar',
                          nit_default=nit, 
-                         redirect_to=redirect_to)
+                         redirect_to=redirect_to,
+                         departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
 
 @app.route('/clientes/editar/<int:cliente_id>', methods=['GET', 'POST'])
 def editar_cliente(cliente_id):
@@ -457,7 +524,11 @@ def editar_cliente(cliente_id):
         db.commit()
         flash('Cliente actualizado correctamente.', 'success')
         return redirect(url_for('clientes_list'))
-    return render_template('cliente_form.html', cliente=cli, current_year=current_year, modo='editar')
+    return render_template('cliente_form.html', 
+                         cliente=cli, 
+                         current_year=current_year, 
+                         modo='editar',
+                         departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
 
 @app.route('/clientes/eliminar/<int:cliente_id>', methods=['POST'])
 def eliminar_cliente(cliente_id):
@@ -535,7 +606,7 @@ def reporte_pedidos():
         query = query.filter(Pedido.fecha_creacion <= fecha_hasta)
     
     if estado:
-        query = query.filter(Pedido.estado == estado)
+        query = query.filter(Pedido.estado_pedido_general == estado)
         
     if cliente_id and cliente_id != 'todos':
         query = query.filter(Pedido.cliente_id == cliente_id)
@@ -577,6 +648,7 @@ def reporte_pedidos():
                          pedidos=pedidos,
                          pagination=pagination,
                          total_pedidos=total_pedidos,
+                         estados=Pedido.ESTADOS_PEDIDO,
                          clientes=clientes,
                          cliente_id=cliente_id)
 
@@ -604,41 +676,75 @@ def exportar_pedidos_excel():
     if estado:
         query = query.filter(Pedido.estado == estado)
     
-    # Obtener datos
-    pedidos = query.order_by(Pedido.fecha_creacion.desc()).all()
-    
-    # Crear DataFrame con los datos
-    data = []
-    for pedido in pedidos:
-        cliente = pedido.cliente_asociado
-        # Calcular el total sumando los items del pedido (cantidad * gramaje)
-        total_pedido = sum(item.cantidad * (item.gramaje_g_item or 0) for item in pedido.items)
+    try:
+        # Obtener datos
+        pedidos = query.order_by(Pedido.fecha_creacion.desc()).all()
         
-        data.append({
-            'ID Pedido': pedido.id,
-            'Fecha': pedido.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
-            'Cliente': cliente.nombre_comercial if cliente else 'N/A',
-            'NIT/CC': cliente.numero_identificacion if cliente else 'N/A',
-            'Estado': pedido.estado_pedido_general,
-            'Cantidad Total (g)': total_pedido,
-            'Dirección de Entrega': pedido.direccion_entrega or '',
-            'Ciudad': pedido.ciudad_entrega or '',
-            'Departamento': pedido.departamento_entrega or '',
-            'Observaciones': pedido.observaciones_despacho or ''
-        })
-    
-    # Crear Excel
-    output = BytesIO()
-    df = pd.DataFrame(data)
-    df.to_excel(output, index=False, sheet_name='Reporte de Pedidos')
-    
-    # Configurar respuesta
-    output.seek(0)
-    response = make_response(output.getvalue())
-    response.mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response.headers['Content-Disposition'] = 'attachment; filename=reporte_pedidos.xlsx'
-    
-    return response
+        # Crear DataFrame with los datos
+        data = []
+        for pedido in pedidos:
+            cliente = pedido.cliente_asociado
+            try:
+                # Calcular el total sumando los items del pedido (cantidad * gramaje)
+                total_pedido = sum(item.cantidad * (item.gramaje_g_item or 0) for item in pedido.items)
+            except Exception as e:
+                app.logger.error(f"Error calculando total para pedido {pedido.id}: {str(e)}")
+                total_pedido = 0
+            
+            data.append({
+                'ID Pedido': pedido.id,
+                'Fecha': pedido.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
+                'Cliente': cliente.nombre_comercial if cliente else 'N/A',
+                'NIT/CC': cliente.numero_identificacion if cliente else 'N/A',
+                'Estado': pedido.estado_pedido_general,
+                'Cantidad Total (g)': total_pedido,
+                'Dirección de Entrega': pedido.direccion_entrega or '',
+                'Ciudad': pedido.ciudad_entrega or '',
+                'Departamento': pedido.departamento_entrega or '',
+                'Observaciones': pedido.observaciones_despacho or ''
+            })
+        
+        # Crear Excel con manejo de errores
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df = pd.DataFrame(data)
+            df.to_excel(writer, index=False, sheet_name='Reporte de Pedidos')
+            
+            # Dar formato al Excel
+            workbook = writer.book
+            worksheet = writer.sheets['Reporte de Pedidos']
+            
+            # Formato para el encabezado
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'bg_color': '#D9EAD3',
+                'border': 1
+            })
+            
+            # Aplicar formato al encabezado
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                worksheet.set_column(col_num, col_num, 15)  # Ancho de columna
+            
+            # Ajustar columnas específicas
+            worksheet.set_column('B:B', 20)  # Fecha
+            worksheet.set_column('C:C', 30)  # Cliente
+            worksheet.set_column('G:G', 35)  # Dirección
+            worksheet.set_column('J:J', 40)  # Observaciones
+        
+        # Configurar respuesta
+        output.seek(0)
+        response = make_response(output.getvalue())
+        response.mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = 'attachment; filename=reporte_pedidos.xlsx'
+        return response
+        
+    except Exception as e:
+        app.logger.error(f"Error generando el reporte Excel: {str(e)}")
+        flash(f'Error generando el reporte: {str(e)}', 'danger')
+        return redirect(url_for('reporte_pedidos'))
 
 @app.route('/pedidos/ver/<int:pedido_id>')
 def ver_pedido(pedido_id):
@@ -710,13 +816,22 @@ def editar_pedido(pedido_id):
                 estado = request.form.get(f'estado_del_pedido_item_{item_idx}', 'Pendiente')
                 
                 if producto_id and cantidad and gramaje:
+                    # Convertir fecha de string a objeto date si no está vacía
+                    fecha_entrega_obj = None
+                    if fecha_entrega:
+                        try:
+                            fecha_entrega_obj = datetime.strptime(fecha_entrega, '%Y-%m-%d').date()
+                        except ValueError:
+                            # Si la fecha no es válida, dejarla como None
+                            fecha_entrega_obj = None
+                    
                     item = PedidoProducto(
                         pedido_id=pedido.id,
                         producto_id=producto_id,
                         cantidad=cantidad,
                         gramaje_g_item=gramaje,
                         observaciones_item=observaciones,
-                        fecha_de_entrega_item=fecha_entrega,
+                        fecha_de_entrega_item=fecha_entrega_obj,
                         estado_del_pedido_item=estado
                     )
                     db.add(item)
@@ -782,13 +897,14 @@ def consolidado_productos():
     categoria = request.args.get('categoria')
     cliente_id = request.args.get('cliente_id')
     
-    # Build base query
+    # Build base query - now including Cliente information
     query = db.query(
         Producto.categoria_linea.label('categoria'),
         Producto.formulacion_grupo.label('formulacion'),
         Producto.referencia_de_producto.label('referencia'),
         Pedido.id.label('pedido_id'),
-        Pedido.observaciones_despacho.label('observaciones'),
+        Cliente.nombre_comercial.label('cliente_nombre'),
+        Cliente.numero_identificacion.label('cliente_nit'),
         sql_func.sum(PedidoProducto.cantidad).label('total_cantidad'),
         sql_func.sum(PedidoProducto.peso_total_g_item).label('total_peso')
     ).join(
@@ -797,10 +913,15 @@ def consolidado_productos():
     ).join(
         Pedido,
         Pedido.id == PedidoProducto.pedido_id
+    ).join(
+        Cliente,
+        Cliente.id == Pedido.cliente_id
     ).group_by(
         Producto.id,
         Pedido.id,
-        Pedido.observaciones_despacho
+        Cliente.id,
+        Cliente.nombre_comercial,
+        Cliente.numero_identificacion
     )
     
     # Apply filters
@@ -808,12 +929,11 @@ def consolidado_productos():
         query = query.filter(Pedido.estado_pedido_general == estado)
     
     if fecha_desde:
-        fecha_desde = datetime.strptime(fecha_desde, '%Y-%m-%d')
         query = query.filter(Pedido.fecha_creacion >= fecha_desde)
     
     if fecha_hasta:
-        fecha_hasta = datetime.strptime(fecha_hasta, '%Y-%m-%d') + timedelta(days=1)
-        query = query.filter(Pedido.fecha_creacion <= fecha_hasta)
+        fecha_hasta_dt = datetime.strptime(fecha_hasta, '%Y-%m-%d') + timedelta(days=1)
+        query = query.filter(Pedido.fecha_creacion <= fecha_hasta_dt)
     
     if categoria:
         query = query.filter(Producto.categoria_linea == categoria)
@@ -828,8 +948,23 @@ def consolidado_productos():
     categorias = db.query(Producto.categoria_linea).distinct().all()
     categorias = [c[0] for c in categorias if c[0]]
     
-    # Execute the query
-    resultados = query.all()
+    # Execute the query and order by formulacion
+    resultados = query.order_by(Producto.formulacion_grupo, Producto.referencia_de_producto).all()
+    
+    # Group results by formulacion and calculate subtotals
+    resultados_agrupados = {}
+    subtotales_formulacion = {}
+    
+    for item in resultados:
+        formulacion = item.formulacion or 'Sin Formulación'
+        
+        if formulacion not in resultados_agrupados:
+            resultados_agrupados[formulacion] = []
+            subtotales_formulacion[formulacion] = {'cantidad': 0, 'peso': 0}
+        
+        resultados_agrupados[formulacion].append(item)
+        subtotales_formulacion[formulacion]['cantidad'] += (item.total_cantidad or 0)
+        subtotales_formulacion[formulacion]['peso'] += (item.total_peso or 0)
     
     # Calculate totals
     total_cantidad = sum(r.total_cantidad or 0 for r in resultados)
@@ -838,6 +973,8 @@ def consolidado_productos():
     current_year = datetime.now().year
     return render_template('consolidado_productos.html', 
                          resultados=resultados,
+                         resultados_agrupados=resultados_agrupados,
+                         subtotales_formulacion=subtotales_formulacion,
                          total_cantidad=total_cantidad,
                          total_peso=total_peso,
                          estados=Pedido.ESTADOS_PEDIDO,
@@ -869,7 +1006,8 @@ def exportar_consolidado_excel():
         Producto.formulacion_grupo.label('formulacion'),
         Producto.referencia_de_producto.label('referencia'),
         Pedido.id.label('pedido_id'),
-        Pedido.observaciones_despacho.label('observaciones'),
+        Cliente.nombre_comercial.label('cliente_nombre'),
+        Cliente.numero_identificacion.label('cliente_nit'),
         sql_func.sum(PedidoProducto.cantidad).label('total_cantidad'),
         sql_func.sum(PedidoProducto.peso_total_g_item).label('total_peso')
     ).join(
@@ -878,13 +1016,18 @@ def exportar_consolidado_excel():
     ).join(
         Pedido,
         Pedido.id == PedidoProducto.pedido_id
+    ).join(
+        Cliente,
+        Cliente.id == Pedido.cliente_id
     ).group_by(
         Producto.id,
         Pedido.id,
-        Pedido.observaciones_despacho
+        Cliente.id,
+        Cliente.nombre_comercial,
+        Cliente.numero_identificacion
     )
     
-    # Apply filters (same as in consolidado_productos)
+    # Apply filters (same as consolidado_productos)
     if estado:
         query = query.filter(Pedido.estado_pedido_general == estado)
     
@@ -902,58 +1045,116 @@ def exportar_consolidado_excel():
     if cliente_id and cliente_id != 'todos':
         query = query.filter(Pedido.cliente_id == cliente_id)
     
-    # Execute the query
-    resultados = query.all()
+    # Execute the query and order by formulacion
+    resultados = query.order_by(Producto.formulacion_grupo, Producto.referencia_de_producto).all()
     
-    # Prepare data for Excel
-    data = []
+    # Group results by formulacion and calculate subtotals (same logic as HTML)
+    resultados_agrupados = {}
+    subtotales_formulacion = {}
+    
     for item in resultados:
+        formulacion = item.formulacion or 'Sin Formulación'
+        
+        if formulacion not in resultados_agrupados:
+            resultados_agrupados[formulacion] = []
+            subtotales_formulacion[formulacion] = {'cantidad': 0, 'peso': 0}
+        
+        resultados_agrupados[formulacion].append(item)
+        subtotales_formulacion[formulacion]['cantidad'] += (item.total_cantidad or 0)
+        subtotales_formulacion[formulacion]['peso'] += (item.total_peso or 0)
+    
+    # Prepare data for Excel with grouping and subtotals
+    data = []
+    
+    for formulacion, items in resultados_agrupados.items():
+        # Add formulacion header row
         data.append({
-            'Categoría': item.categoria or '',
-            'Formulación': item.formulacion or '',
-            'Referencia de Producto': item.referencia or '',
-            'N° Pedido': item.pedido_id,
-            'Observaciones': item.observaciones or '',
-            'Cantidad': float(item.total_cantidad or 0),
-            'Peso Total (g)': float(item.total_peso or 0)
+            'Cliente': f'🧪 {formulacion}',
+            'Categoría': '',
+            'Formulación': '',
+            'Referencia de Producto': '',
+            'N° Pedido': '',
+            'Cantidad': '',
+            'Peso Total (g)': '',
+            'Tipo_Fila': 'header_formulacion'
         })
+        
+        # Add items for this formulacion
+        for item in items:
+            data.append({
+                'Cliente': f'{item.cliente_nombre} ({item.cliente_nit})',
+                'Categoría': item.categoria or '-',
+                'Formulación': item.formulacion or '-',
+                'Referencia de Producto': item.referencia or '-',
+                'N° Pedido': item.pedido_id,
+                'Cantidad': float(item.total_cantidad or 0),
+                'Peso Total (g)': float(item.total_peso or 0),
+                'Tipo_Fila': 'item'
+            })
+        
+        # Add subtotal row
+        data.append({
+            'Cliente': '',
+            'Categoría': '',
+            'Formulación': '',
+            'Referencia de Producto': '',
+            'N° Pedido': f'Subtotal {formulacion}:',
+            'Cantidad': float(subtotales_formulacion[formulacion]['cantidad']),
+            'Peso Total (g)': float(subtotales_formulacion[formulacion]['peso']),
+            'Tipo_Fila': 'subtotal'
+        })
+    
+    # Calculate totals
+    total_cantidad = sum(r.total_cantidad or 0 for r in resultados)
+    total_peso = sum(r.total_peso or 0 for r in resultados)
+    
+    # Add totals row
+    data.append({
+        'Cliente': '',
+        'Categoría': '',
+        'Formulación': '',
+        'Referencia de Producto': '',
+        'N° Pedido': 'TOTALES GENERALES:',
+        'Cantidad': float(total_cantidad),
+        'Peso Total (g)': float(total_peso),
+        'Tipo_Fila': 'total'
+    })
     
     # Create Excel file
     output = BytesIO()
     df = pd.DataFrame(data)
     
-    # Calculate totals
-    total_cantidad = df['Cantidad'].sum()
-    total_peso = df['Peso Total (g)'].sum()
+    # Remove the helper column before writing to Excel
+    df_excel = df.drop('Tipo_Fila', axis=1)
     
-    # Create a new DataFrame for the totals row
-    totals_row = pd.DataFrame({
-        'Categoría': ['TOTALES'],
-        'Formulación': [''],
-        'Referencia de Producto': [''],
-        'N° Pedido': [''],
-        'Observaciones': [''],
-        'Cantidad': [total_cantidad],
-        'Peso Total (g)': [total_peso]
-    })
-    
-    # Concatenate the original DataFrame with the totals row
-    df = pd.concat([df, totals_row], ignore_index=True)
-    
-    # Write to Excel
+    # Write to Excel with formatting
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Consolidado Productos', index=False)
+        df_excel.to_excel(writer, sheet_name='Consolidado Productos', index=False)
         
         # Get workbook and worksheet objects
         workbook = writer.book
         worksheet = writer.sheets['Consolidado Productos']
         
-        # Add formats
+        # Define formats
         header_format = workbook.add_format({
             'bold': True,
             'text_wrap': True,
             'valign': 'top',
             'bg_color': '#D9EAD3',
+            'border': 1
+        })
+        
+        formulacion_header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#D1ECF1',
+            'border': 1,
+            'font_size': 12
+        })
+        
+        subtotal_format = workbook.add_format({
+            'bold': True,
+            'num_format': '0.00',
+            'bg_color': '#FFF3CD',
             'border': 1
         })
         
@@ -964,22 +1165,43 @@ def exportar_consolidado_excel():
             'border': 1
         })
         
-        # Format the header
-        for col_num, value in enumerate(df.columns.values):
+        # Format the header row
+        for col_num, value in enumerate(df_excel.columns.values):
             worksheet.write(0, col_num, value, header_format)
         
-        # Format the totals row
-        last_row = len(df)
-        for col_num, col in enumerate(df.columns):
-            if col in ['Cantidad', 'Peso Total (g)']:
-                worksheet.write(last_row - 1, col_num, df.iloc[-1][col], total_format)
+        # Format data rows based on type
+        for row_idx, row in df.iterrows():
+            excel_row = row_idx + 1  # +1 because Excel is 1-indexed and we have headers
+            
+            if row['Tipo_Fila'] == 'header_formulacion':
+                # Format formulacion header row
+                for col_num in range(len(df_excel.columns)):
+                    worksheet.write(excel_row, col_num, df_excel.iloc[row_idx, col_num], formulacion_header_format)
+            
+            elif row['Tipo_Fila'] == 'subtotal':
+                # Format subtotal row
+                for col_num, col_name in enumerate(df_excel.columns):
+                    if col_name in ['Cantidad', 'Peso Total (g)']:
+                        worksheet.write(excel_row, col_num, df_excel.iloc[row_idx, col_num], subtotal_format)
+                    else:
+                        cell_format = workbook.add_format({'bold': True, 'bg_color': '#FFF3CD', 'border': 1})
+                        worksheet.write(excel_row, col_num, df_excel.iloc[row_idx, col_num], cell_format)
+            
+            elif row['Tipo_Fila'] == 'total':
+                # Format total row
+                for col_num, col_name in enumerate(df_excel.columns):
+                    if col_name in ['Cantidad', 'Peso Total (g)']:
+                        worksheet.write(excel_row, col_num, df_excel.iloc[row_idx, col_num], total_format)
+                    else:
+                        cell_format = workbook.add_format({'bold': True, 'bg_color': '#F4CCCC', 'border': 1})
+                        worksheet.write(excel_row, col_num, df_excel.iloc[row_idx, col_num], cell_format)
         
         # Set column widths
-        worksheet.set_column('A:A', 20)  # Categoría
-        worksheet.set_column('B:B', 20)  # Formulación
-        worksheet.set_column('C:C', 30)  # Referencia
-        worksheet.set_column('D:D', 10)  # N° Pedido
-        worksheet.set_column('E:E', 40)  # Observaciones
+        worksheet.set_column('A:A', 35)  # Cliente
+        worksheet.set_column('B:B', 20)  # Categoría
+        worksheet.set_column('C:C', 20)  # Formulación
+        worksheet.set_column('D:D', 30)  # Referencia
+        worksheet.set_column('E:E', 15)  # N° Pedido
         worksheet.set_column('F:G', 15)  # Cantidad y Peso
     
     # Prepare response
@@ -993,6 +1215,42 @@ def exportar_consolidado_excel():
 @app.route('/pedidos/consolidado')
 def consolidado_pedidos():
     return redirect(url_for('consolidado_productos'))
+
+# Datos de departamentos y ciudades de Colombia
+DEPARTAMENTOS_CIUDADES = {
+    'Amazonas': ['Leticia', 'Puerto Nariño'],
+    'Antioquia': ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Apartadó', 'Turbo', 'Rionegro', 'Sabaneta', 'La Estrella', 'Copacabana'],
+    'Arauca': ['Arauca', 'Tame', 'Saravena', 'Fortul', 'Puerto Rondón', 'Cravo Norte', 'Arauquita'],
+    'Atlántico': ['Barranquilla', 'Soledad', 'Malambo', 'Sabanagrande', 'Puerto Colombia', 'Galapa', 'Palmar de Varela'],
+    'Bolívar': ['Cartagena', 'Magangué', 'Turbaco', 'Arjona', 'El Carmen de Bolívar', 'San Pablo', 'Mompox'],
+    'Boyacá': ['Tunja', 'Duitama', 'Sogamoso', 'Chiquinquirá', 'Paipa', 'Villa de Leyva', 'Puerto Boyacá'],
+    'Caldas': ['Manizales', 'La Dorada', 'Chinchiná', 'Riosucio', 'Anserma', 'Villamaría', 'Palestina'],
+    'Caquetá': ['Florencia', 'San Vicente del Caguán', 'Puerto Rico', 'La Montañita', 'Curillo', 'El Paujil'],
+    'Casanare': ['Yopal', 'Aguazul', 'Villanueva', 'Tauramena', 'Monterrey', 'Paz de Ariporo'],
+    'Cauca': ['Popayán', 'Santander de Quilichao', 'Puerto Tejada', 'Patía', 'Guapi', 'Corinto'],
+    'Cesar': ['Valledupar', 'Aguachica', 'Bosconia', 'Codazzi', 'La Jagua de Ibirico', 'Chiriguaná'],
+    'Chocó': ['Quibdó', 'Istmina', 'Condoto', 'Tadó', 'Acandí', 'Capurganá'],
+    'Córdoba': ['Montería', 'Lorica', 'Cereté', 'Sahagún', 'Planeta Rica', 'Montelíbano'],
+    'Cundinamarca': ['Bogotá', 'Soacha', 'Girardot', 'Zipaquirá', 'Facatativá', 'Chía', 'Mosquera', 'Madrid', 'Funza', 'Cajicá'],
+    'Guainía': ['Inírida'],
+    'Guaviare': ['San José del Guaviare', 'Calamar', 'El Retorno', 'Miraflores'],
+    'Huila': ['Neiva', 'Pitalito', 'Garzón', 'La Plata', 'Campoalegre', 'Timaná'],
+    'La Guajira': ['Riohacha', 'Maicao', 'Uribia', 'Manaure', 'San Juan del Cesar', 'Villanueva'],
+    'Magdalena': ['Santa Marta', 'Ciénaga', 'Fundación', 'Aracataca', 'El Banco', 'Plato'],
+    'Meta': ['Villavicencio', 'Acacías', 'Granada', 'Puerto López', 'Cumaral', 'San Martín'],
+    'Nariño': ['Pasto', 'Tumaco', 'Ipiales', 'Túquerres', 'Samaniego', 'La Unión'],
+    'Norte de Santander': ['Cúcuta', 'Villa del Rosario', 'Los Patios', 'Ocaña', 'Pamplona', 'Tibú'],
+    'Putumayo': ['Mocoa', 'Puerto Asís', 'Orito', 'Valle del Guamuez', 'San Miguel', 'Villagarzón'],
+    'Quindío': ['Armenia', 'Calarcá', 'La Tebaida', 'Montenegro', 'Quimbaya', 'Circasia'],
+    'Risaralda': ['Pereira', 'Dosquebradas', 'Santa Rosa de Cabal', 'La Virginia', 'Marsella', 'Belén de Umbría'],
+    'San Andrés y Providencia': ['San Andrés', 'Providencia'],
+    'Santander': ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Barrancabermeja', 'San Gil'],
+    'Sucre': ['Sincelejo', 'Corozal', 'Sampués', 'San Marcos', 'Tolú', 'Coveñas'],
+    'Tolima': ['Ibagué', 'Espinal', 'Melgar', 'Honda', 'Chaparral', 'Líbano'],
+    'Valle del Cauca': ['Cali', 'Palmira', 'Buenaventura', 'Tuluá', 'Cartago', 'Buga', 'Jamundí', 'Yumbo'],
+    'Vaupés': ['Mitú'],
+    'Vichada': ['Puerto Carreño', 'La Primavera', 'Santa Rosalía', 'Cumaribo']
+}
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

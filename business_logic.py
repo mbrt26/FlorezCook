@@ -372,9 +372,9 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
             alerta=form_data.get('alerta_value'),
             despacho_tipo=form_data.get('despacho_tipo'),
             despacho_sede=form_data.get('despacho_sede'),
-            direccion_entrega=form_data.get('despacho_direccion_linea1'),
-            ciudad_entrega=form_data.get('despacho_direccion_ciudad'),
-            departamento_entrega=form_data.get('despacho_direccion_departamento'),
+            direccion_entrega=form_data.get('direccion_entrega'),
+            ciudad_entrega=form_data.get('ciudad_entrega'),
+            departamento_entrega=form_data.get('departamento_entrega'),
             despacho_horario_atencion=form_data.get('despacho_horario_atencion'),
             observaciones_despacho=form_data.get('despacho_observaciones'),
             estado_pedido_general=form_data.get('estado_pedido_general', 'En Proceso')
@@ -382,6 +382,15 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
 
         # Crear los PedidoProducto (items del pedido)
         for item_data in form_data.get('pedido_items', []):
+            # Convertir fecha de string a objeto date si no está vacía
+            fecha_entrega_obj = None
+            if item_data.get('fecha_de_entrega_item'):
+                try:
+                    fecha_entrega_obj = datetime.date.fromisoformat(item_data.get('fecha_de_entrega_item'))
+                except ValueError:
+                    # Si la fecha no es válida, dejarla como None
+                    fecha_entrega_obj = None
+            
             pedido_producto = models.PedidoProducto(
                 producto_id=item_data.get('producto_id'),
                 cantidad=float(item_data.get('cantidad')),
@@ -390,7 +399,7 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
                 grupo_item=item_data.get('grupo_item'),
                 linea_item=item_data.get('linea_item'),
                 observaciones_item=item_data.get('observaciones_item'),
-                fecha_de_entrega_item=datetime.date.fromisoformat(item_data.get('fecha_de_entrega_item')),
+                fecha_de_entrega_item=fecha_entrega_obj,
                 estado_del_pedido_item=item_data.get('estado_del_pedido_item', 'Pendiente')
             )
             nuevo_pedido.items.append(pedido_producto)

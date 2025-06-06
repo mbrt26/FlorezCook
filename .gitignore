@@ -56,3 +56,9 @@ logs/
 
 # Deploy files
 cloud-sql-proxy
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes

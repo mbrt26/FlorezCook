@@ -4,6 +4,7 @@ Este archivo es cargado automáticamente por Google App Engine.
 """
 import os
 import logging
+import json
 from google.cloud import secretmanager
 
 # Configuración de logging
@@ -44,10 +45,42 @@ def get_secret(secret_id, version_id="latest"):
         logger.error(f"Error al obtener el secreto {secret_id}: {e}")
         return None
 
+def get_secrets():
+    """
+    Obtiene todos los secretos necesarios de Secret Manager.
+    """
+    secrets = {}
+    secret_names = [
+        'DB_PASSWORD',
+        'SECRET_KEY',
+        'DB_USER',
+        'DB_NAME',
+        'DB_HOST',
+        'DB_PORT'
+    ]
+    
+    for secret_name in secret_names:
+        secret_value = get_secret(secret_name)
+        if secret_value:
+            secrets[secret_name] = secret_value
+            # Establecer la variable de entorno si no está ya definida
+            if secret_name not in os.environ:
+                os.environ[secret_name] = secret_value
+    
+    return secrets
+
+# Cargar secretos al inicio
+try:
+    secrets = get_secrets()
+    logger.info("Secretos cargados exitosamente")
+except Exception as e:
+    logger.error(f"Error al cargar secretos: {e}")
+    secrets = {}
+
 # Configuración de la aplicación
 app_config = {
     # Clave secreta para la aplicación (usada para firmar cookies de sesión, etc.)
-    'SECRET_KEY': os.environ.get('SECRET_KEY', 'florezcook-secret-key-prod'),
+    'SECRET_KEY': secrets.get('SECRET_KEY', os.environ.get('SECRET_KEY', 'florezcook-secret-key-prod')),
     
     # Configuración de la base de datos
     'SQLALCHEMY_DATABASE_URI': os.environ.get('DATABASE_URL', ''),

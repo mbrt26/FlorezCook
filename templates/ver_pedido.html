@@ -70,8 +70,8 @@
                             <td>{{ item.producto_asociado.codigo }}</td>
                             <td>{{ item.producto_asociado.referencia_de_producto }}</td>
                             <td class="text-end">{{ "%0.2f"|format(item.cantidad) }}</td>
-                            <td class="text-end">{{ "%0.2f"|format(item.gramaje_g_item) }}</td>
-                            <td class="text-end">{{ "%0.2f"|format(item.peso_total_g_item) }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(item.gramaje_g_item or 0) }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(item.peso_total_g_item or 0) }}</td>
                         </tr>
                         {% else %}
                         <tr>
@@ -82,8 +82,8 @@
                     <tfoot>
                         <tr class="table-secondary">
                             <th colspan="3" class="text-end">Total:</th>
-                            <th class="text-end">{{ "%0.2f"|format(pedido.items|sum(attribute='gramaje_g_item')) }} g</th>
-                            <th class="text-end">{{ "%0.2f"|format(pedido.items|sum(attribute='peso_total_g_item')) }} g</th>
+                            <th class="text-end">{{ "%0.2f"|format((pedido.items|selectattr('gramaje_g_item')|sum(attribute='gramaje_g_item')) or 0) }} g</th>
+                            <th class="text-end">{{ "%0.2f"|format((pedido.items|selectattr('peso_total_g_item')|sum(attribute='peso_total_g_item')) or 0) }} g</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -120,7 +120,7 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Total productos:</strong> {{ pedido.items|length }}</p>
-                    <p><strong>Peso total:</strong> {{ "%0.2f"|format(pedido.items|sum(attribute='peso_total_g_item')) }} g</p>
+                    <p><strong>Peso total:</strong> {{ "%0.2f"|format((pedido.items|selectattr('peso_total_g_item')|sum(attribute='peso_total_g_item')) or 0) }} g</p>
                     {% if pedido.alerta %}
                         <div class="alert alert-warning mt-3">
                             <strong>Alerta:</strong> {{ pedido.alerta }}
