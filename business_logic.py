@@ -1,7 +1,12 @@
+import os
+import logging
 from sqlalchemy.orm import Session
-# Cambiado a import absoluto para evitar error de importación relativa
-import models 
+# Corregir el import de models para que funcione en App Engine Standard
+from models import Cliente, Producto, Pedido, PedidoProducto
 import datetime
+
+# Configurar logger para el módulo
+logger = logging.getLogger(__name__)
 
 def inicializar_estado_nuevo_pedido():
     """
@@ -94,7 +99,7 @@ def manejar_input_identificacion_cliente(db: Session, numero_identificacion_ingr
         return new_state
 
     # Buscar el cliente en la base de datos
-    cliente_existente = db.query(models.Cliente).filter(models.Cliente.numero_identificacion == numero_identificacion_ingresado).first()
+    cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero_identificacion_ingresado).first()
 
     if cliente_existente:
         # --- Cliente ENCONTRADO ---
@@ -170,7 +175,7 @@ def actualizar_info_producto_en_pedido(db: Session, producto_id_seleccionado: in
     item_a_actualizar = updated_items[item_index]
 
     if producto_id_seleccionado is not None:
-        producto_info = db.query(models.Producto).filter(models.Producto.id == producto_id_seleccionado).first()
+        producto_info = db.query(Producto).filter(Producto.id == producto_id_seleccionado).first()
 
         if producto_info:
             item_a_actualizar['producto_id'] = producto_info.id
@@ -311,7 +316,7 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
     numero_identificacion_cliente = form_data.get('numero_identificacion_cliente_ingresado')
 
     # Buscar cliente por número de identificación ingresado
-    cliente_existente = db.query(models.Cliente).filter(models.Cliente.numero_identificacion == numero_identificacion_cliente).first()
+    cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero_identificacion_cliente).first()
 
     # PASO 1: CREAR O UBICAR CLIENTE (si es necesario)
     if form_data.get('show_seccion_registro') and not cliente_existente:
@@ -327,7 +332,7 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
             
         try:
             # Crear nuevo cliente en una transacción independiente
-            nuevo_cliente = models.Cliente(
+            nuevo_cliente = Cliente(
                 nombre_comercial=form_data.get('nombre_comercial_r'),
                 razon_social=form_data.get('razon_social_r'),
                 tipo_identificacion=form_data.get('tipo_identificacion_r'),
@@ -347,7 +352,7 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
             cliente_id_para_pedido = nuevo_cliente.id
             
             # Verificar que efectivamente se guardó el cliente
-            cliente_guardado = db.query(models.Cliente).get(nuevo_cliente.id)
+            cliente_guardado = db.query(Cliente).get(nuevo_cliente.id)
             if not cliente_guardado:
                 return False, ["Error: El cliente se creó pero no se pudo recuperar de la base de datos."]
                 
@@ -365,7 +370,7 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
     # PASO 2: CREAR PEDIDO (usando el cliente ya confirmado)
     try:
         # Crear el Pedido en una nueva transacción
-        nuevo_pedido = models.Pedido(
+        nuevo_pedido = Pedido(
             numero_identificacion_cliente_ingresado=numero_identificacion_cliente,
             nombre_cliente_ingresado=form_data.get('nombre_cliente_ingresado') if form_data.get('nombre_cliente_ingresado') else cliente_existente.nombre_comercial,
             cliente_id=cliente_id_para_pedido,
@@ -391,8 +396,12 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
                     # Si la fecha no es válida, dejarla como None
                     fecha_entrega_obj = None
             
-            pedido_producto = models.PedidoProducto(
+            # AGREGADO: Calcular fecha_pedido_item (fecha cuando se hace el pedido - hoy)
+            fecha_pedido_item = datetime.date.today()
+            
+            pedido_producto = PedidoProducto(
                 producto_id=item_data.get('producto_id'),
+                fecha_pedido_item=fecha_pedido_item,  # AGREGADO: Columna faltante
                 cantidad=float(item_data.get('cantidad')),
                 gramaje_g_item=float(item_data.get('gramaje_g_item')),
                 peso_total_g_item=float(item_data.get('peso_total_g_item')),
@@ -427,7 +436,7 @@ def actualizar_estado_items_pedido(db: Session, pedido_id: int, nuevo_estado_gen
         bool: True si la actualización fue exitosa, False en caso contrario.
     """
     try:
-        pedido = db.query(models.Pedido).filter(models.Pedido.id == pedido_id).first()
+        pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
         if not pedido:
             print(f"Error: Pedido con ID {pedido_id} no encontrado.")
             return False
@@ -529,7 +538,7 @@ def importar_productos_desde_excel(db: Session, archivo_excel_path: str) -> tupl
                 categoria = row[column_map['categoria_linea']]
 
                 # Buscar si el producto ya existe por código
-                producto_existente = db.query(models.Producto).filter(models.Producto.codigo == str(codigo)).first()
+                producto_existente = db.query(Producto).filter(Producto.codigo == str(codigo)).first()
 
                 if producto_existente:
                     # Actualizar producto existente
@@ -540,7 +549,7 @@ def importar_productos_desde_excel(db: Session, archivo_excel_path: str) -> tupl
                     actualizados_count += 1
                 else:
                     # Crear nuevo producto
-                    nuevo_producto = models.Producto(
+                    nuevo_producto = Producto(
                         codigo=str(codigo),
                         referencia_de_producto=referencia,
                         gramaje_g=gramaje,
@@ -569,57 +578,46 @@ def importar_productos_desde_excel(db: Session, archivo_excel_path: str) -> tupl
         db.rollback()
         return False, f"Error durante la importación: {str(e)}", 0, 0, [f"Error general: {str(e)}"]
 
-# Ejemplo de uso para la importación de productos:
-# if __name__ == '__main__':
-#     # ... (código de setup de base de datos como en ejemplos anteriores) ...
-#     engine = create_engine(models.DATABASE_URL)
-#     models.Base.metadata.create_all(bind=engine)
-#     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-#     db = SessionLocal()
+# Caché simple para productos (evita consultas repetitivas)
+_productos_cache = None
+_cache_timestamp = None
+CACHE_DURATION = 300  # 5 minutos en segundos
 
-#     # Crear un archivo Excel de ejemplo llamado 'productos_a_importar.xlsx' en la misma carpeta
-#     # con las columnas: Codigo, Referencia de Producto, Gramaje (g), Formulacion/Grupo, Categoria/Linea
-#     # Ejemplo de contenido para productos_a_importar.xlsx:
-#     # Codigo | Referencia de Producto | Gramaje (g) | Formulacion/Grupo | Categoria/Linea
-#     # P001   | Pan Baguette           | 250         | PAN TRADICIONAL   | PAN
-#     # P002   | Croissant Almendra     | 120         | HOJALDRE DULCE    | HOJALDRE
-#     # P003   | Galleta Chocolate      | 30          | GALLETERIA        | REPOSTERIA
-#     # BG001  | Bagel Tradicional      | 110         | BAGELS            | PAN (para actualizar)
+def get_productos_cached(db):
+    """Obtiene productos desde caché o base de datos"""
+    global _productos_cache, _cache_timestamp
+    import time
+    
+    current_time = time.time()
+    
+    # Verificar si el caché es válido
+    if (_productos_cache is None or 
+        _cache_timestamp is None or 
+        (current_time - _cache_timestamp) > CACHE_DURATION):
+        
+        # Actualizar caché
+        productos = db.query(Producto).all()
+        _productos_cache = [
+            {
+                "id": p.id,
+                "codigo": p.codigo,
+                "referencia_de_producto": p.referencia_de_producto,
+                "gramaje_g": p.gramaje_g,
+                "formulacion_grupo": p.formulacion_grupo,
+                "categoria_linea": p.categoria_linea
+            }
+            for p in productos
+        ]
+        _cache_timestamp = current_time
+        
+        if os.getenv('FLASK_ENV') != 'production':
+            logger.info(f"Caché de productos actualizado: {len(_productos_cache)} productos")
+    
+    return _productos_cache
 
-#     # Simular la creación de un producto existente para probar la actualización
-#     if not db.query(models.Producto).filter(models.Producto.codigo == "BG001").first():
-#         prod_existente = models.Producto(codigo="BG001", referencia_de_producto="Bagel Viejo", gramaje_g=100, categoria_linea="PAN VIEJO", formulacion_grupo="BAGELS VIEJOS")
-#         db.add(prod_existente)
-#         db.commit()
-
-#     ruta_excel_ejemplo = "productos_a_importar.xlsx" # Asegúrate que este archivo exista
-#     # Aquí podrías crear el archivo Excel de ejemplo con openpyxl si no existe
-#     # from openpyxl import Workbook
-#     # if not os.path.exists(ruta_excel_ejemplo):
-#     #     wb_test = Workbook()
-#     #     ws_test = wb_test.active
-#     #     ws_test.append(['Codigo', 'Referencia de Producto', 'Gramaje (g)', 'Formulacion/Grupo', 'Categoria/Linea'])
-#     #     ws_test.append(['P001', 'Pan Baguette', 250, 'PAN TRADICIONAL', 'PAN'])
-#     #     ws_test.append(['P002', 'Croissant Almendra', 120, 'HOJALDRE DULCE', 'HOJALDRE'])
-#     #     ws_test.append(['BG001', 'Bagel Tradicional Actualizado', 115, 'BAGELS NUEVOS', 'PAN MODERNO'])
-#     #     wb_test.save(ruta_excel_ejemplo)
-
-#     print(f"Importando productos desde: {ruta_excel_ejemplo}")
-#     success, message, importados, actualizados, errores = importar_productos_desde_excel(db, ruta_excel_ejemplo)
-
-#     print(f"Resultado: {message}")
-#     print(f"Productos importados: {importados}")
-#     print(f"Productos actualizados: {actualizados}")
-#     if errores:
-#         print("Errores encontrados:")
-#         for error in errores:
-#             print(f"- {error}")
-
-#     # Verificar en la base de datos
-#     producto_actualizado = db.query(models.Producto).filter(models.Producto.codigo == "BG001").first()
-#     if producto_actualizado:
-#         print(f"Producto BG001 gramaje: {producto_actualizado.gramaje_g}") # Debería ser 115 si el excel lo actualizó
-#         assert producto_actualizado.gramaje_g == 115 
-
-#     db.close()
+def invalidate_productos_cache():
+    """Invalida el caché de productos"""
+    global _productos_cache, _cache_timestamp
+    _productos_cache = None
+    _cache_timestamp = None
 

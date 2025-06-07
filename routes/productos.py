@@ -6,6 +6,8 @@ import pandas as pd
 
 productos_bp = Blueprint('productos', __name__, url_prefix='/productos')
 
+# Ruta específica para manejar /productos sin barra final (evita redirect 308)
+@productos_bp.route('', methods=['GET'], strict_slashes=False)
 @productos_bp.route('/')
 def lista():
     """Lista de productos"""

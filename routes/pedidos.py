@@ -4,31 +4,26 @@ from models import Producto, Cliente, Pedido, PedidoProducto
 import business_logic
 from utils.helpers import get_current_year
 from sqlalchemy import func
+import logging
+
+# Configurar logging para esta ruta
+logger = logging.getLogger(__name__)
 
 pedidos_bp = Blueprint('pedidos', __name__, url_prefix='/pedidos')
 
-@pedidos_bp.route('/')
-def index():
-    """Redirige a la página principal de pedidos"""
-    return redirect(url_for('pedidos.form'))
-
+# Ruta específica para manejar /pedidos sin barra final (evita redirect 308)
+@pedidos_bp.route('', methods=['GET', 'POST'], strict_slashes=False)
+@pedidos_bp.route('/', methods=['GET', 'POST'])
 @pedidos_bp.route('/form', methods=['GET', 'POST'])
 def form():
-    """Formulario para crear nuevos pedidos"""
-    db = db_config.get_session()
+    """Formulario para crear nuevos pedidos - OPTIMIZADO SIN REDIRECCIÓN"""
+    db = None
     try:
-        productos = db.query(Producto).all()
-        productos_dict = [
-            {
-                "id": p.id,
-                "codigo": p.codigo,
-                "referencia_de_producto": p.referencia_de_producto,
-                "gramaje_g": p.gramaje_g,
-                "formulacion_grupo": p.formulacion_grupo,
-                "categoria_linea": p.categoria_linea
-            }
-            for p in productos
-        ]
+        db = db_config.get_session()
+        
+        # OPTIMIZACIÓN: Usar caché de productos en lugar de consulta directa
+        productos_dict = business_logic.get_productos_cached(db)
+        
         current_year = get_current_year()
 
         # Get client ID and show_welcome flag from query params
@@ -89,23 +84,32 @@ def form():
             form_state = business_logic.inicializar_estado_nuevo_pedido()
             form_state.update(cliente_data)  # Prefill with client data
             show_welcome_message = request.args.get('show_welcome', '').lower() == 'true'
+            
             return render_template('pedido_form.html', 
                                 form_data=form_state, 
                                 productos=productos_dict, 
                                 current_year=current_year,
                                 show_welcome_message=show_welcome_message)
     except Exception as e:
-        flash(f"Error interno del servidor: {str(e)}", 'danger')
-        return redirect(url_for('index'))  # Cambiar de 'main.index' a 'index'
+        logger.error(f"Error interno del servidor en pedidos.form: {str(e)}", exc_info=True)
+        return f"Error interno del servidor: {str(e)}", 500
     finally:
-        db.close()
+        if db:
+            db.close()
 
 @pedidos_bp.route('/lista')
 def lista():
-    """Lista de pedidos"""
+    """Lista de pedidos - OPTIMIZADA"""
     db = db_config.get_session()
     try:
-        pedidos = db.query(Pedido).order_by(Pedido.fecha_creacion.desc()).all()
+        # OPTIMIZACIÓN: Usar eager loading para evitar consultas N+1
+        from sqlalchemy.orm import joinedload
+        
+        pedidos = db.query(Pedido).options(
+            joinedload(Pedido.cliente_asociado),
+            joinedload(Pedido.items).joinedload(PedidoProducto.producto_asociado)
+        ).order_by(Pedido.fecha_creacion.desc()).limit(50).all()  # Limitar a 50 para mejor rendimiento
+        
         current_year = get_current_year()
         return render_template('pedidos_lista.html', pedidos=pedidos, current_year=current_year)
     finally:
@@ -211,6 +215,7 @@ def editar(pedido_id):
         
         if request.method == 'POST':
             try:
+                logger.info(f"Actualizando pedido con ID: {pedido_id}")
                 # Update pedido general info
                 pedido.estado_pedido_general = request.form.get('estado')
                 pedido.alerta = request.form.get('alerta')
@@ -222,10 +227,12 @@ def editar(pedido_id):
                 pedido.observaciones_despacho = request.form.get('observaciones_despacho')
 
                 # Delete existing items
+                logger.info(f"Eliminando {len(pedido.items)} items existentes del pedido")
                 for item in pedido.items:
                     db.delete(item)
                 
                 # Add new items
+                logger.info("Agregando nuevos items al pedido")
                 idx = 0
                 while True:
                     producto_id_key = f'producto_id_{idx}'
@@ -237,11 +244,18 @@ def editar(pedido_id):
                         fecha_entrega_str = request.form.get(f'fecha_de_entrega_item_{idx}')
                         fecha_entrega = datetime.date.fromisoformat(fecha_entrega_str) if fecha_entrega_str else None
                         
+                        # AGREGADO: Usar fecha actual para fecha_pedido_item
+                        fecha_pedido_item = datetime.date.today()
+                        
                         item = PedidoProducto(
                             pedido_id=pedido.id,
                             producto_id=int(request.form.get(producto_id_key)),
+                            fecha_pedido_item=fecha_pedido_item,  # AGREGADO: Columna faltante
                             cantidad=float(request.form.get(f'cantidad_{idx}')),
-                            gramaje_g_item=float(request.form.get(f'gramaje_g_item_{idx}')),
+                            gramaje_g_item=float(request.form.get(f'gramaje_g_item_{idx}', 0)),
+                            peso_total_g_item=float(request.form.get(f'peso_total_g_item_{idx}', 0)),
+                            grupo_item=request.form.get(f'grupo_item_{idx}', ''),
+                            linea_item=request.form.get(f'linea_item_{idx}', ''),
                             fecha_de_entrega_item=fecha_entrega,
                             estado_del_pedido_item=request.form.get(f'estado_del_pedido_item_{idx}', 'Pendiente'),
                             observaciones_item=request.form.get(f'observaciones_item_{idx}', '')
@@ -254,6 +268,7 @@ def editar(pedido_id):
                 return redirect(url_for('pedidos.ver', pedido_id=pedido_id))
             except Exception as e:
                 db.rollback()
+                logger.error(f'Error al actualizar el pedido: {str(e)}', exc_info=True)
                 flash(f'Error al actualizar el pedido: {str(e)}', 'danger')
 
         return render_template('editar_pedido.html', 
@@ -261,6 +276,7 @@ def editar(pedido_id):
                              productos=productos,
                              estados=estados)
     except Exception as e:
+        logger.error(f'Error al cargar el pedido: {str(e)}', exc_info=True)
         flash(f'Error al cargar el pedido: {str(e)}', 'danger')
         return redirect(url_for('pedidos.lista'))
     finally:

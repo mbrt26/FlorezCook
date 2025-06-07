@@ -1,0 +1,130 @@
+{
+  "timestamp": "2025-06-06T19:58:00.815414",
+  "tests_locales": {},
+  "tests_remotos": {
+    "produccion": {
+      "/": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/",
+        "status_code": 200,
+        "response_time_ms": 4552.37,
+        "size_bytes": 897,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "67754e4153adc9d77004612b73cc7770;o=1",
+          "Date": "Sat, 07 Jun 2025 00:58:06 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": true
+      },
+      "/clientes": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/clientes",
+        "status_code": 200,
+        "response_time_ms": 4712.81,
+        "size_bytes": 12311,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "ceca9c9fe56ef9b9b4d06c741245ce8b",
+          "Date": "Sat, 07 Jun 2025 00:58:11 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": true
+      },
+      "/productos": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/productos",
+        "status_code": 200,
+        "response_time_ms": 4944.76,
+        "size_bytes": 14172,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "1dd6d8ff06c1784918cc8815a5748b67",
+          "Date": "Sat, 07 Jun 2025 00:58:16 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": true
+      },
+      "/pedidos": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/pedidos",
+        "status_code": 200,
+        "response_time_ms": 919.72,
+        "size_bytes": 29183,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "da13358510cf3337cb516c0ac391b351",
+          "Date": "Sat, 07 Jun 2025 00:58:16 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": true
+      },
+      "/api/clientes/buscar?nit=123456789": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/api/clientes/buscar?nit=123456789",
+        "status_code": 200,
+        "response_time_ms": 493.34,
+        "size_bytes": 17,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Cloud-Trace-Context": "31830ab300dd37a6f3a5abdb59629a13",
+          "Date": "Sat, 07 Jun 2025 00:58:17 GMT",
+          "Server": "Google Frontend",
+          "Content-Length": "17",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+        },
+        "success": true
+      },
+      "/health": {
+        "url": "https://florezcook-dot-appsindunnova.rj.r.appspot.com/health",
+        "status_code": 404,
+        "response_time_ms": 4454.94,
+        "size_bytes": 147,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "1cb5062980b7b10a9462e9fe561122a8",
+          "Date": "Sat, 07 Jun 2025 00:58:21 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": false
+      }
+    }
+  },
+  "base_datos": {
+    "conexion_ms": 2.47,
+    "clientes_count": 0,
+    "clientes_time_ms": 17.8,
+    "pedidos_count": 0,
+    "pedidos_time_ms": 4.42,
+    "productos_count": 0,
+    "productos_time_ms": 2.62,
+    "join_time_ms": 1.3
+  },
+  "sistema": {
+    "cpu_percent": 8.0,
+    "cpu_count": 8,
+    "memory_percent": 74.8,
+    "memory_available_gb": 2.02,
+    "disk_percent": 16.5,
+    "disk_free_gb": 52.84
+  },
+  "recomendaciones": [
+    "🚨 Aplicación muy lenta en producción (+3s)",
+    "🔄 Redirección detectada: https://florezcook-dot-appsindunnova.rj.r.appspot.com/pedidos -> 308"
+  ]
+}

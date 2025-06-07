@@ -2,87 +2,90 @@
 Punto de entrada principal para la aplicación FlorezCook en producción.
 """
 import os
-from google.cloud import secretmanager
-import google.cloud.logging
-from app import app, get_db_engine
-from models import Base
 import logging
 
-# Configuración de logging para Google Cloud
-client = google.cloud.logging.Client()
-client.setup_logging()
+# Configurar logging de manera MUY silenciosa para producción
+def setup_logging():
+    """Configura el logging para el entorno adecuado"""
+    if os.getenv('ENV') == 'production' or os.getenv('GAE_ENV') == 'standard':
+        # EN PRODUCCIÓN: Solo errores críticos
+        logging.basicConfig(
+            level=logging.ERROR,
+            format='%(levelname)s - %(message)s'
+        )
+        
+        # Evitar propagación duplicada y SILENCIAR todos los loggers
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+            
+        # Handler silencioso para producción
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.ERROR)
+        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root_logger.addHandler(handler)
+        root_logger.setLevel(logging.ERROR)
+        
+        # Silenciar todos los loggers específicos
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+        logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
+        logging.getLogger('config.database').setLevel(logging.ERROR)
+        logging.getLogger('app').setLevel(logging.ERROR)
+        logging.getLogger('main').setLevel(logging.ERROR)
+        
+    else:
+        # Configuración para desarrollo
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
 
-# Configuración de logging local
-logging.basicConfig(level=logging.INFO)
+# Configurar logging antes de importar la app
+setup_logging()
+
+from app import create_app
+
+# Logger específico para la aplicación
 logger = logging.getLogger(__name__)
 
-def access_secret_version(secret_id):
-    """Accede a un secreto en Google Cloud Secret Manager."""
-    try:
-        client = secretmanager.SecretManagerServiceClient()
-        name = f"projects/florezcook/secrets/{secret_id}/versions/latest"
-        response = client.access_secret_version(request={"name": name})
-        return response.payload.data.decode("UTF-8")
-    except Exception as e:
-        logger.error(f"Error accediendo al secreto {secret_id}: {e}")
-        return None
-
-def init_db():
-    """Inicializa la base de datos creando las tablas necesarias."""
-    try:
-        logger.info("Inicializando la base de datos...")
-        engine = get_db_engine()
+def get_app_config():
+    """Obtiene la configuración de la aplicación."""
+    config = {}
+    
+    is_production = os.getenv('ENV') == 'production' or os.getenv('GAE_ENV') == 'standard'
+    
+    if is_production:
+        # SILENCIOSO - no log en producción
+        config.update({
+            'DEBUG': False,
+            'SECRET_KEY': 'florezcook-production-secret-key-2025-v3-secure-static',
+            'SESSION_COOKIE_SECURE': True,
+            'SESSION_COOKIE_HTTPONLY': True,
+            'SESSION_COOKIE_SAMESITE': 'Lax',
+            'PERMANENT_SESSION_LIFETIME': 1800
+        })
         
-        if engine is not None:
-            logger.info("Creando tablas en la base de datos...")
-            Base.metadata.create_all(bind=engine)
-            logger.info("Base de datos inicializada correctamente")
-            return True
-        else:
-            logger.error("No se pudo obtener el motor de la base de datos")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Error al inicializar la base de datos: {e}")
-        raise
-
-def create_app():
-    """Crea y configura la aplicación Flask."""
-    try:
-        if os.getenv('FLASK_ENV') == 'production':
-            logger.info("Configurando la aplicación para producción")
-            app.logger.setLevel(logging.INFO)
-            
-            # Obtener secretos
-            app.config['SECRET_KEY'] = access_secret_version('florezcook-secret-key')
-            
-            # Asegurarse de que las variables de entorno necesarias estén configuradas
-            required_vars = ['CLOUD_SQL_CONNECTION_NAME', 'DB_USER', 'DB_PASS', 'DB_NAME']
-            missing_vars = [var for var in required_vars if not os.getenv(var)]
-            if missing_vars:
-                logger.error(f"Faltan variables de entorno requeridas: {', '.join(missing_vars)}")
-                raise EnvironmentError(f"Faltan variables de entorno: {', '.join(missing_vars)}")
-            
-            # Configuración de la base de datos
-            with app.app_context():
-                if not init_db():
-                    logger.error("No se pudo inicializar la base de datos")
-                    raise RuntimeError("Fallo en la inicialización de la base de datos")
-        else:
-            logger.info("Configurando la aplicación para desarrollo")
-            app.config['DEBUG'] = True
-            with app.app_context():
-                init_db()
-                
-    except Exception as e:
-        logger.error(f"Error al configurar la aplicación: {e}")
-        raise
+    else:
+        logger.info("Configurando la aplicación para desarrollo")
+        config.update({
+            'DEBUG': True,
+            'SECRET_KEY': 'dev-key-florezcook-2025',
+            'SESSION_COOKIE_SECURE': False
+        })
         
-    return app
+    return config
 
-# Punto de entrada para Gunicorn
+# Crear y configurar la aplicación SILENCIOSAMENTE
 app = create_app()
+app.config.update(get_app_config())
+
+# NO LOG en producción
+if os.getenv('ENV') != 'production' and os.getenv('GAE_ENV') != 'standard':
+    logger.info("Aplicación configurada para desarrollo")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
+    if os.getenv('ENV') != 'production':
+        logger.info(f"Iniciando aplicación en puerto {port}")
     app.run(host="0.0.0.0", port=port)

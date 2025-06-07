@@ -108,28 +108,46 @@
                                 <option value="">Seleccionar producto</option>
                                 {% for producto in productos %}
                                 <option value="{{ producto.id }}" 
+                                    data-gramaje="{{ producto.gramaje_g }}"
+                                    data-grupo="{{ producto.formulacion_grupo }}"
+                                    data-linea="{{ producto.categoria_linea }}"
                                     {% if item.producto_id == producto.id %}selected{% endif %}>
                                     {{ producto.codigo }} - {{ producto.referencia_de_producto }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Cantidad</label>
-                            <input type="number" step="0.01" class="form-control" name="cantidad_{{ loop.index0 }}" 
+                            <input type="number" step="0.01" class="form-control cantidad-input" name="cantidad_{{ loop.index0 }}" 
                                    value="{{ item.cantidad }}" min="0.01" required>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Gramaje (g)</label>
-                            <input type="number" step="0.01" class="form-control" name="gramaje_g_item_{{ loop.index0 }}" 
-                                   value="{{ item.gramaje_g_item }}" required>
+                            <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_{{ loop.index0 }}" 
+                                   value="{{ item.gramaje_g_item }}" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Peso Total (g)</label>
+                            <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_{{ loop.index0 }}" 
+                                   value="{{ item.peso_total_g_item }}" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Grupo</label>
+                            <input type="text" class="form-control grupo-input" name="grupo_item_{{ loop.index0 }}" 
+                                   value="{{ item.grupo_item or '' }}" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Línea</label>
+                            <input type="text" class="form-control linea-input" name="linea_item_{{ loop.index0 }}" 
+                                   value="{{ item.linea_item or '' }}" readonly>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Fecha Entrega</label>
                             <input type="date" class="form-control" name="fecha_de_entrega_item_{{ loop.index0 }}" 
                                    value="{{ item.fecha_de_entrega_item.strftime('%Y-%m-%d') if item.fecha_de_entrega_item else '' }}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Estado</label>
                             <select class="form-select" name="estado_del_pedido_item_{{ loop.index0 }}">
                                 <option value="Pendiente" {% if item.estado_del_pedido_item == 'Pendiente' %}selected{% endif %}>Pendiente</option>
@@ -138,7 +156,7 @@
                                 <option value="Cancelado" {% if item.estado_del_pedido_item == 'Cancelado' %}selected{% endif %}>Cancelado</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-1">
                             <label class="form-label">Observaciones</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" name="observaciones_item_{{ loop.index0 }}" 
@@ -156,25 +174,40 @@
                             <select class="form-select producto-select" name="producto_id_0" required>
                                 <option value="">Seleccionar producto</option>
                                 {% for producto in productos %}
-                                <option value="{{ producto.id }}">
+                                <option value="{{ producto.id }}"
+                                    data-gramaje="{{ producto.gramaje_g }}"
+                                    data-grupo="{{ producto.formulacion_grupo }}"
+                                    data-linea="{{ producto.categoria_linea }}">
                                     {{ producto.codigo }} - {{ producto.referencia_de_producto }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Cantidad</label>
-                            <input type="number" step="0.01" class="form-control" name="cantidad_0" min="0.01" required>
+                            <input type="number" step="0.01" class="form-control cantidad-input" name="cantidad_0" min="0.01" required>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Gramaje (g)</label>
-                            <input type="number" step="0.01" class="form-control" name="gramaje_g_item_0" required>
+                            <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_0" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Peso Total (g)</label>
+                            <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_0" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Grupo</label>
+                            <input type="text" class="form-control grupo-input" name="grupo_item_0" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Línea</label>
+                            <input type="text" class="form-control linea-input" name="linea_item_0" readonly>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Fecha Entrega</label>
                             <input type="date" class="form-control" name="fecha_de_entrega_item_0">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label">Estado</label>
                             <select class="form-select" name="estado_del_pedido_item_0">
                                 <option value="Pendiente">Pendiente</option>
@@ -183,7 +216,7 @@
                                 <option value="Cancelado">Cancelado</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-1">
                             <label class="form-label">Observaciones</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" name="observaciones_item_0">
@@ -269,6 +302,9 @@ $(document).ready(function() {
         newRow.find('[name^="producto_id_"]').attr('name', `producto_id_${newIndex}`);
         newRow.find('[name^="cantidad_"]').attr('name', `cantidad_${newIndex}`);
         newRow.find('[name^="gramaje_g_item_"]').attr('name', `gramaje_g_item_${newIndex}`);
+        newRow.find('[name^="peso_total_g_item_"]').attr('name', `peso_total_g_item_${newIndex}`);
+        newRow.find('[name^="grupo_item_"]').attr('name', `grupo_item_${newIndex}`);
+        newRow.find('[name^="linea_item_"]').attr('name', `linea_item_${newIndex}`);
         newRow.find('[name^="fecha_de_entrega_item_"]').attr('name', `fecha_de_entrega_item_${newIndex}`);
         newRow.find('[name^="estado_del_pedido_item_"]').attr('name', `estado_del_pedido_item_${newIndex}`);
         newRow.find('[name^="observaciones_item_"]').attr('name', `observaciones_item_${newIndex}`);
@@ -300,6 +336,9 @@ $(document).ready(function() {
                 $(this).find('[name^="producto_id_"]').attr('name', `producto_id_${newIndex}`);
                 $(this).find('[name^="cantidad_"]').attr('name', `cantidad_${newIndex}`);
                 $(this).find('[name^="gramaje_g_item_"]').attr('name', `gramaje_g_item_${newIndex}`);
+                $(this).find('[name^="peso_total_g_item_"]').attr('name', `peso_total_g_item_${newIndex}`);
+                $(this).find('[name^="grupo_item_"]').attr('name', `grupo_item_${newIndex}`);
+                $(this).find('[name^="linea_item_"]').attr('name', `linea_item_${newIndex}`);
                 $(this).find('[name^="fecha_de_entrega_item_"]').attr('name', `fecha_de_entrega_item_${newIndex}`);
                 $(this).find('[name^="estado_del_pedido_item_"]').attr('name', `estado_del_pedido_item_${newIndex}`);
                 $(this).find('[name^="observaciones_item_"]').attr('name', `observaciones_item_${newIndex}`);
@@ -310,6 +349,44 @@ $(document).ready(function() {
                 $('.btn-remove-item').prop('disabled', true);
             }
         }
+    });
+    
+    // Product selection change handler
+    $(document).on('change', '.producto-select', function() {
+        const selectedOption = $(this).find('option:selected');
+        const row = $(this).closest('.item-row');
+        const cantidadInput = row.find('.cantidad-input');
+        
+        if (selectedOption.val()) {
+            const gramaje = parseFloat(selectedOption.data('gramaje')) || 0;
+            const grupo = selectedOption.data('grupo') || '';
+            const linea = selectedOption.data('linea') || '';
+            
+            // Update fields
+            row.find('.gramaje-input').val(gramaje);
+            row.find('.grupo-input').val(grupo);
+            row.find('.linea-input').val(linea);
+            
+            // Calculate peso total
+            const cantidad = parseFloat(cantidadInput.val()) || 0;
+            const pesoTotal = cantidad * gramaje;
+            row.find('.peso-total-input').val(pesoTotal.toFixed(2));
+        } else {
+            // Clear fields when no product selected
+            row.find('.gramaje-input').val('');
+            row.find('.grupo-input').val('');
+            row.find('.linea-input').val('');
+            row.find('.peso-total-input').val('');
+        }
+    });
+    
+    // Cantidad change handler
+    $(document).on('input', '.cantidad-input', function() {
+        const row = $(this).closest('.item-row');
+        const cantidad = parseFloat($(this).val()) || 0;
+        const gramaje = parseFloat(row.find('.gramaje-input').val()) || 0;
+        const pesoTotal = cantidad * gramaje;
+        row.find('.peso-total-input').val(pesoTotal.toFixed(2));
     });
 });
 </script>

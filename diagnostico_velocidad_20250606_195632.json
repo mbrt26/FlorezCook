@@ -1,0 +1,163 @@
+{
+  "timestamp": "2025-06-06T19:56:23.448985",
+  "tests_locales": {},
+  "tests_remotos": {
+    "produccion": {
+      "/": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/",
+        "status_code": 200,
+        "response_time_ms": 2229.82,
+        "size_bytes": 8735,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding, Cookie",
+          "Expires": "Sat, 07 Jun 2025 00:56:25 GMT",
+          "Cache-Control": "max-age=0, no-cache, no-store, must-revalidate, private",
+          "X-Frame-Options": "DENY",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Set-Cookie": "sessionid=7957yz8hb0eo5godcuqzoj4z2q5fdnw3; expires=Sat, 21 Jun 2025 00:56:25 GMT; HttpOnly; Max-Age=1209600; Path=/; SameSite=Lax; Secure",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "2f33373110f73557770727baca429c42",
+          "Date": "Sat, 07 Jun 2025 00:56:26 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": true
+      },
+      "/clientes": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/clientes",
+        "status_code": 404,
+        "response_time_ms": 337.09,
+        "size_bytes": 179,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding, Cookie",
+          "X-Frame-Options": "DENY",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "56b2a07e7c56fd98bc4d077a25f14b17",
+          "Date": "Sat, 07 Jun 2025 00:56:27 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": false
+      },
+      "/productos": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/productos",
+        "status_code": 404,
+        "response_time_ms": 345.6,
+        "size_bytes": 179,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding, Cookie",
+          "X-Frame-Options": "DENY",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "e6e2e6377c5019b0ad39e794f56bfa02",
+          "Date": "Sat, 07 Jun 2025 00:56:27 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": false
+      },
+      "/pedidos": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/pedidos",
+        "status_code": 404,
+        "response_time_ms": 487.53,
+        "size_bytes": 179,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding, Cookie",
+          "X-Frame-Options": "DENY",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "670d00382b46307f2ad78491539a05cd",
+          "Date": "Sat, 07 Jun 2025 00:56:27 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": false
+      },
+      "/api/clientes/buscar?nit=123456789": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/api/clientes/buscar?nit=123456789",
+        "status_code": 404,
+        "response_time_ms": 456.87,
+        "size_bytes": 179,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Vary": "Accept-Encoding, Cookie",
+          "X-Frame-Options": "DENY",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Content-Encoding": "gzip",
+          "X-Cloud-Trace-Context": "9cc0eb32d2eee490dddf6d43c3ec196a",
+          "Date": "Sat, 07 Jun 2025 00:56:28 GMT",
+          "Server": "Google Frontend",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "Transfer-Encoding": "chunked"
+        },
+        "success": false
+      },
+      "/health": {
+        "url": "https://rgd-aire-dot-appsindunnova.rj.r.appspot.com/health",
+        "status_code": 503,
+        "response_time_ms": 945.81,
+        "size_bytes": 41,
+        "headers": {
+          "Content-Type": "text/plain",
+          "X-Frame-Options": "DENY",
+          "Vary": "Cookie",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "same-origin",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "X-Cloud-Trace-Context": "2c0b2fe549a39278032bc13df17cca44",
+          "Date": "Sat, 07 Jun 2025 00:56:29 GMT",
+          "Server": "Google Frontend",
+          "Content-Length": "41",
+          "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+        },
+        "success": false
+      }
+    }
+  },
+  "base_datos": {
+    "conexion_ms": 0.65,
+    "clientes_count": 0,
+    "clientes_time_ms": 9.53,
+    "pedidos_count": 0,
+    "pedidos_time_ms": 3.14,
+    "productos_count": 0,
+    "productos_time_ms": 1.88,
+    "join_time_ms": 0.86
+  },
+  "sistema": {
+    "cpu_percent": 12.6,
+    "cpu_count": 8,
+    "memory_percent": 76.6,
+    "memory_available_gb": 1.87,
+    "disk_percent": 16.5,
+    "disk_free_gb": 52.84
+  },
+  "recomendaciones": [
+    "⚠️ Aplicación lenta en producción (+1.5s)"
+  ]
+}

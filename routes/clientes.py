@@ -3,6 +3,7 @@ from config.database import db_config
 from models import Cliente
 from utils.helpers import get_current_year, DEPARTAMENTOS_CIUDADES
 import pandas as pd
+from sqlalchemy.exc import IntegrityError
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')  # Restore the prefix
 
@@ -38,6 +39,8 @@ def buscar_api():
     finally:
         db.close()
 
+# Ruta específica para manejar /clientes sin barra final (evita redirect 308)
+@clientes_bp.route('', methods=['GET'], strict_slashes=False)
 @clientes_bp.route('/')
 def lista():
     """Lista de clientes"""
@@ -85,6 +88,17 @@ def agregar():
                                     redirect_to=redirect_to,
                                     departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
             
+            # Verificar si ya existe un cliente con este número de identificación
+            cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero).first()
+            if cliente_existente:
+                flash(f'Ya existe un cliente registrado con el número de identificación {numero}. Por favor verifique el número o busque el cliente existente.', 'warning')
+                return render_template('cliente_form.html', 
+                                    current_year=current_year, 
+                                    modo='agregar',
+                                    nit_default=nit, 
+                                    redirect_to=redirect_to,
+                                    departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
+            
             try:
                 # Crear el nuevo cliente
                 cli = Cliente(
@@ -111,9 +125,16 @@ def agregar():
                         return redirect('/pedidos/form')
                 return redirect(url_for('clientes.lista'))
                 
+            except IntegrityError as e:
+                db.rollback()
+                # Manejar específicamente el error de clave duplicada
+                if 'numero_identificacion' in str(e) or 'UNIQUE constraint failed' in str(e):
+                    flash(f'Ya existe un cliente con el número de identificación {numero}. Por favor verifique el número.', 'warning')
+                else:
+                    flash('Error al guardar el cliente. Por favor intente nuevamente.', 'danger')
             except Exception as e:
                 db.rollback()
-                flash(f'Error al guardar el cliente: {str(e)}', 'danger')
+                flash('Ocurrió un error inesperado. Por favor intente nuevamente.', 'danger')
                 
         # Renderizar el formulario (GET o si hay error en POST)
         return render_template('cliente_form.html', 
@@ -138,18 +159,46 @@ def editar(cliente_id):
             return redirect(url_for('clientes.lista'))
         
         if request.method == 'POST':
-            cli.nombre_comercial = request.form.get('nombre_comercial')
-            cli.razon_social = request.form.get('razon_social')
-            cli.tipo_identificacion = request.form.get('tipo_identificacion')
-            cli.numero_identificacion = request.form.get('numero_identificacion')
-            cli.email = request.form.get('email')
-            cli.telefono = request.form.get('telefono')
-            cli.direccion = request.form.get('direccion')
-            cli.ciudad = request.form.get('ciudad')
-            cli.departamento = request.form.get('departamento')
-            db.commit()
-            flash('Cliente actualizado correctamente.', 'success')
-            return redirect(url_for('clientes.lista'))
+            nuevo_numero = request.form.get('numero_identificacion')
+            
+            # Verificar si se está cambiando el número de identificación y si ya existe
+            if nuevo_numero != cli.numero_identificacion:
+                cliente_existente = db.query(Cliente).filter(
+                    Cliente.numero_identificacion == nuevo_numero,
+                    Cliente.id != cliente_id
+                ).first()
+                
+                if cliente_existente:
+                    flash(f'Ya existe otro cliente con el número de identificación {nuevo_numero}. Por favor use un número diferente.', 'warning')
+                    return render_template('cliente_form.html', 
+                                         cliente=cli, 
+                                         current_year=current_year, 
+                                         modo='editar',
+                                         departamentos_ciudades=DEPARTAMENTOS_CIUDADES)
+            
+            try:
+                cli.nombre_comercial = request.form.get('nombre_comercial')
+                cli.razon_social = request.form.get('razon_social')
+                cli.tipo_identificacion = request.form.get('tipo_identificacion')
+                cli.numero_identificacion = nuevo_numero
+                cli.email = request.form.get('email')
+                cli.telefono = request.form.get('telefono')
+                cli.direccion = request.form.get('direccion')
+                cli.ciudad = request.form.get('ciudad')
+                cli.departamento = request.form.get('departamento')
+                db.commit()
+                flash('Cliente actualizado correctamente.', 'success')
+                return redirect(url_for('clientes.lista'))
+            except IntegrityError as e:
+                db.rollback()
+                # Manejar específicamente el error de clave duplicada
+                if 'numero_identificacion' in str(e) or 'UNIQUE constraint failed' in str(e):
+                    flash(f'Ya existe un cliente con el número de identificación {nuevo_numero}. Por favor verifique el número.', 'warning')
+                else:
+                    flash('Error al actualizar el cliente. Por favor intente nuevamente.', 'danger')
+            except Exception as e:
+                db.rollback()
+                flash('Ocurrió un error inesperado. Por favor intente nuevamente.', 'danger')
         
         return render_template('cliente_form.html', 
                              cliente=cli, 
@@ -218,11 +267,19 @@ def importar():
                     resultados = {'exito': True, 'mensaje': 'Clientes importados correctamente', 'errores': []}
                     for _, fila in df.iterrows():
                         try:
+                            numero_identificacion = str(fila.get('numero_identificacion', ''))
+                            
+                            # Verificar si ya existe un cliente con este número de identificación
+                            cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero_identificacion).first()
+                            if cliente_existente:
+                                resultados['errores'].append(f'Fila {_ + 2}: Ya existe un cliente con el número de identificación {numero_identificacion}')
+                                continue
+                            
                             cliente = Cliente(
                                 nombre_comercial=fila.get('nombre_comercial', ''),
                                 razon_social=fila.get('razon_social', fila.get('nombre_comercial', '')),
                                 tipo_identificacion=fila.get('tipo_identificacion', ''),
-                                numero_identificacion=str(fila.get('numero_identificacion', '')),
+                                numero_identificacion=numero_identificacion,
                                 digito_verificacion=str(fila.get('digito_verificacion', '')) if pd.notna(fila.get('digito_verificacion')) else None,
                                 direccion=fila.get('direccion', ''),
                                 direccion_ciudad=fila.get('ciudad', ''),
@@ -236,9 +293,15 @@ def importar():
                             )
                             db.add(cliente)
                             db.commit()
+                        except IntegrityError as e:
+                            db.rollback()
+                            if 'numero_identificacion' in str(e) or 'UNIQUE constraint failed' in str(e):
+                                resultados['errores'].append(f'Fila {_ + 2}: El número de identificación {numero_identificacion} ya está registrado')
+                            else:
+                                resultados['errores'].append(f'Fila {_ + 2}: Error de base de datos - {str(e)}')
                         except Exception as e:
                             db.rollback()
-                            resultados['errores'].append(f'Error en fila {_ + 2}: {str(e)}')
+                            resultados['errores'].append(f'Fila {_ + 2}: {str(e)}')
                     
                     if resultados['errores']:
                         resultados['exito'] = False
