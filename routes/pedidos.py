@@ -49,15 +49,23 @@ def form():
                 if key not in form_data:
                     break
                 if form_data.get(key):
+                    # Corregir la conversión de cantidad para manejar decimales
+                    cantidad_raw = form_data.get(f'cantidad_{idx}', '0')
+                    try:
+                        # Primero convertir a float para manejar decimales, luego a int
+                        cantidad = int(float(cantidad_raw))
+                    except (ValueError, TypeError):
+                        cantidad = 0
+                    
                     pedido_items.append({
                         'producto_id': int(form_data.get(f'producto_id_{idx}', 0)),
-                        'cantidad': form_data.get(f'cantidad_{idx}', ''),
+                        'cantidad': cantidad,  # Usar la cantidad corregida
                         'gramaje_g_item': form_data.get(f'gramaje_g_item_{idx}', ''),
                         'peso_total_g_item': form_data.get(f'peso_total_g_item_{idx}', ''),
                         'grupo_item': form_data.get(f'grupo_item_{idx}', ''),
                         'linea_item': form_data.get(f'linea_item_{idx}', ''),
                         'fecha_de_entrega_item': form_data.get(f'fecha_de_entrega_item_{idx}', ''),
-                        'observaciones_item': form_data.get(f'observaciones_item_{idx}', ''),
+                        'comentarios_item': form_data.get(f'comentarios_item_{idx}', ''),  # CAMBIADO: De observaciones_item a comentarios_item
                         'estado_del_pedido_item': form_data.get(f'estado_del_pedido_item_{idx}', 'Pendiente'),
                     })
                 idx += 1
@@ -247,18 +255,26 @@ def editar(pedido_id):
                         # AGREGADO: Usar fecha actual para fecha_pedido_item
                         fecha_pedido_item = datetime.date.today()
                         
+                        # Corregir la conversión de cantidad para manejar decimales
+                        cantidad_raw = request.form.get(f'cantidad_{idx}', '0')
+                        try:
+                            # Primero convertir a float para manejar decimales, luego a int
+                            cantidad = int(float(cantidad_raw))
+                        except (ValueError, TypeError):
+                            cantidad = 0
+                        
                         item = PedidoProducto(
                             pedido_id=pedido.id,
                             producto_id=int(request.form.get(producto_id_key)),
                             fecha_pedido_item=fecha_pedido_item,  # AGREGADO: Columna faltante
-                            cantidad=float(request.form.get(f'cantidad_{idx}')),
+                            cantidad=cantidad,  # Usar la cantidad corregida
                             gramaje_g_item=float(request.form.get(f'gramaje_g_item_{idx}', 0)),
                             peso_total_g_item=float(request.form.get(f'peso_total_g_item_{idx}', 0)),
                             grupo_item=request.form.get(f'grupo_item_{idx}', ''),
                             linea_item=request.form.get(f'linea_item_{idx}', ''),
                             fecha_de_entrega_item=fecha_entrega,
                             estado_del_pedido_item=request.form.get(f'estado_del_pedido_item_{idx}', 'Pendiente'),
-                            observaciones_item=request.form.get(f'observaciones_item_{idx}', '')
+                            comentarios_item=request.form.get(f'comentarios_item_{idx}', '')  # CAMBIADO: De observaciones_item a comentarios_item
                         )
                         db.add(item)
                     idx += 1

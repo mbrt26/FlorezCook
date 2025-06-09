@@ -89,12 +89,12 @@ class PedidoProducto(Base):
     pedido_id = Column(Integer, ForeignKey("pedidos.id", ondelete="CASCADE"))
     producto_id = Column(Integer, ForeignKey("productos.id"))
     fecha_pedido_item = Column(Date, nullable=False)  # AGREGADO: Columna faltante que existe en BD
-    cantidad = Column(Float, nullable=False)
+    cantidad = Column(Integer, nullable=False)  # CAMBIADO: De Float a Integer
     gramaje_g_item = Column(Float)
     peso_total_g_item = Column(Float)
     grupo_item = Column(String(100))
     linea_item = Column(String(100))
-    observaciones_item = Column(Text)
+    comentarios_item = Column(Text)  # CAMBIADO: De observaciones_item a comentarios_item
     fecha_de_entrega_item = Column(Date)
     estado_del_pedido_item = Column(String(50), default="Pendiente")
     fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)

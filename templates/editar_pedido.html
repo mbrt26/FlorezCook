@@ -84,15 +84,6 @@
             </div>
         </div>
 
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i> Guardar Cambios
-            </button>
-            <a href="{{ url_for('pedidos.ver', pedido_id=pedido.id) }}" class="btn btn-secondary">
-                <i class="fas fa-times me-1"></i> Cancelar
-            </a>
-        </div>
-
         <!-- Order Items Section -->
         <div class="card mt-4">
             <div class="card-header bg-primary text-white">
@@ -119,8 +110,12 @@
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Cantidad</label>
-                            <input type="number" step="0.01" class="form-control cantidad-input" name="cantidad_{{ loop.index0 }}" 
-                                   value="{{ item.cantidad }}" min="0.01" required>
+                            <select class="form-select cantidad-select" name="cantidad_{{ loop.index0 }}" required>
+                                <option value="">Seleccionar cantidad...</option>
+                                {% for num in range(1, 101) %}
+                                <option value="{{ num }}" {% if item.cantidad == num %}selected{% endif %}>{{ num }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Gramaje (g)</label>
@@ -157,10 +152,10 @@
                             </select>
                         </div>
                         <div class="col-md-1">
-                            <label class="form-label">Observaciones</label>
+                            <label class="form-label">Comentarios</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" name="observaciones_item_{{ loop.index0 }}" 
-                                       value="{{ item.observaciones_item or '' }}">
+                                <input type="text" class="form-control" name="comentarios_item_{{ loop.index0 }}" 
+                                       value="{{ item.comentarios_item or '' }}">
                                 <button type="button" class="btn btn-danger btn-remove-item" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -185,7 +180,12 @@
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Cantidad</label>
-                            <input type="number" step="0.01" class="form-control cantidad-input" name="cantidad_0" min="0.01" required>
+                            <select class="form-select cantidad-select" name="cantidad_0" required>
+                                <option value="">Seleccionar cantidad...</option>
+                                {% for num in range(1, 101) %}
+                                <option value="{{ num }}">{{ num }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-1">
                             <label class="form-label">Gramaje (g)</label>
@@ -217,9 +217,9 @@
                             </select>
                         </div>
                         <div class="col-md-1">
-                            <label class="form-label">Observaciones</label>
+                            <label class="form-label">Comentarios</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" name="observaciones_item_0">
+                                <input type="text" class="form-control" name="comentarios_item_0">
                                 <button type="button" class="btn btn-danger btn-remove-item" disabled>
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -234,6 +234,15 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Guardar Cambios
+            </button>
+            <a href="{{ url_for('pedidos.ver', pedido_id=pedido.id) }}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i> Cancelar
+            </a>
         </div>
     </form>
 </div>
@@ -265,6 +274,60 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
+    // Función para sumar 2 días hábiles a una fecha
+    function sumarDiasHabiles(fecha, dias) {
+        let resultado = new Date(fecha);
+        let sumados = 0;
+        while (sumados < dias) {
+            resultado.setDate(resultado.getDate() + 1);
+            if (resultado.getDay() !== 0 && resultado.getDay() !== 6) {
+                sumados++;
+            }
+        }
+        return resultado;
+    }
+
+    // Función para obtener la fecha mínima de entrega (2 días hábiles)
+    function obtenerFechaMinimaEntrega() {
+        let hoy = new Date();
+        let fechaMinima = sumarDiasHabiles(hoy, 2);
+        let yyyy = fechaMinima.getFullYear();
+        let mm = String(fechaMinima.getMonth() + 1).padStart(2, '0');
+        let dd = String(fechaMinima.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Función para validar fecha de entrega
+    function validarFechaEntrega(fecha, elemento) {
+        const fechaMinima = obtenerFechaMinimaEntrega();
+        if (fecha < fechaMinima) {
+            // Mostrar mensaje de error
+            elemento.addClass('is-invalid');
+            if (!elemento.next('.invalid-feedback').length) {
+                elemento.after(`<div class="invalid-feedback">La fecha de entrega debe ser al menos ${fechaMinima} (2 días hábiles desde hoy)</div>`);
+            }
+            return false;
+        } else {
+            // Remover mensaje de error
+            elemento.removeClass('is-invalid');
+            elemento.next('.invalid-feedback').remove();
+            return true;
+        }
+    }
+
+    // Establecer fecha mínima para todos los campos de fecha existentes
+    $('input[name^="fecha_de_entrega_item_"]').each(function() {
+        $(this).attr('min', obtenerFechaMinimaEntrega());
+    });
+
+    // Event listener para validar fechas de entrega cuando cambien
+    $(document).on('change', 'input[name^="fecha_de_entrega_item_"]', function() {
+        const fecha = $(this).val();
+        if (fecha) {
+            validarFechaEntrega(fecha, $(this));
+        }
+    });
+
     // Form validation
     (function () {
         'use strict'
@@ -272,9 +335,22 @@ $(document).ready(function() {
         Array.prototype.slice.call(forms)
             .forEach(function (form) {
                 form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
+                    // Validar fechas de entrega antes de enviar
+                    let hayErroresFecha = false;
+                    
+                    $('input[name^="fecha_de_entrega_item_"]').each(function() {
+                        const fecha = $(this).val();
+                        if (fecha && !validarFechaEntrega(fecha, $(this))) {
+                            hayErroresFecha = true;
+                        }
+                    });
+                    
+                    if (hayErroresFecha || !form.checkValidity()) {
                         event.preventDefault()
                         event.stopPropagation()
+                        if (hayErroresFecha) {
+                            alert('Por favor corrija las fechas de entrega antes de guardar los cambios.');
+                        }
                     }
                     form.classList.add('was-validated')
                 }, false)
@@ -287,27 +363,72 @@ $(document).ready(function() {
         const itemCount = $('.item-row').length;
         const newIndex = itemCount;
         
-        // Clone the first row and update indices
-        const newRow = $('.item-row').first().clone();
+        // Generar opciones de cantidad del 1 al 100
+        let cantidadOptions = '<option value="">Seleccionar cantidad...</option>';
+        for (let i = 1; i <= 100; i++) {
+            cantidadOptions += `<option value="${i}">${i}</option>`;
+        }
         
-        // Reset values
-        newRow.find('input').val('');
-        newRow.find('select').val('');
-        newRow.find('input[type="number"]').val('1');
-        newRow.find('input[type="date"]').val('');
-        newRow.find('.btn-remove-item').prop('disabled', false);
+        // Crear nueva fila (sin usar Jinja2 en JavaScript)
+        const newRow = $(`
+            <div class="row g-3 mb-3 item-row" data-index="${newIndex}">
+                <div class="col-md-3">
+                    <label class="form-label">Producto</label>
+                    <select class="form-select producto-select" name="producto_id_${newIndex}" required>
+                        <option value="">Seleccionar producto</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Cantidad</label>
+                    <select class="form-select cantidad-select" name="cantidad_${newIndex}" required>
+                        ${cantidadOptions}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Gramaje (g)</label>
+                    <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_${newIndex}" readonly>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Peso Total (g)</label>
+                    <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_${newIndex}" readonly>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Grupo</label>
+                    <input type="text" class="form-control grupo-input" name="grupo_item_${newIndex}" readonly>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Línea</label>
+                    <input type="text" class="form-control linea-input" name="linea_item_${newIndex}" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha Entrega</label>
+                    <input type="date" class="form-control" name="fecha_de_entrega_item_${newIndex}" min="${obtenerFechaMinimaEntrega()}">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" name="estado_del_pedido_item_${newIndex}">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso" selected>En Proceso</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Comentarios</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="comentarios_item_${newIndex}">
+                        <button type="button" class="btn btn-danger btn-remove-item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
         
-        // Update names and IDs
-        newRow.attr('data-index', newIndex);
-        newRow.find('[name^="producto_id_"]').attr('name', `producto_id_${newIndex}`);
-        newRow.find('[name^="cantidad_"]').attr('name', `cantidad_${newIndex}`);
-        newRow.find('[name^="gramaje_g_item_"]').attr('name', `gramaje_g_item_${newIndex}`);
-        newRow.find('[name^="peso_total_g_item_"]').attr('name', `peso_total_g_item_${newIndex}`);
-        newRow.find('[name^="grupo_item_"]').attr('name', `grupo_item_${newIndex}`);
-        newRow.find('[name^="linea_item_"]').attr('name', `linea_item_${newIndex}`);
-        newRow.find('[name^="fecha_de_entrega_item_"]').attr('name', `fecha_de_entrega_item_${newIndex}`);
-        newRow.find('[name^="estado_del_pedido_item_"]').attr('name', `estado_del_pedido_item_${newIndex}`);
-        newRow.find('[name^="observaciones_item_"]').attr('name', `observaciones_item_${newIndex}`);
+        // Clonar las opciones de productos del primer select
+        const firstProductSelect = $('.producto-select').first();
+        const productOptions = firstProductSelect.html();
+        newRow.find('.producto-select').html(productOptions);
         
         // Add to container
         container.append(newRow);
@@ -341,7 +462,7 @@ $(document).ready(function() {
                 $(this).find('[name^="linea_item_"]').attr('name', `linea_item_${newIndex}`);
                 $(this).find('[name^="fecha_de_entrega_item_"]').attr('name', `fecha_de_entrega_item_${newIndex}`);
                 $(this).find('[name^="estado_del_pedido_item_"]').attr('name', `estado_del_pedido_item_${newIndex}`);
-                $(this).find('[name^="observaciones_item_"]').attr('name', `observaciones_item_${newIndex}`);
+                $(this).find('[name^="comentarios_item_"]').attr('name', `comentarios_item_${newIndex}`);
             });
             
             // Disable remove button if only one row remains
@@ -355,7 +476,7 @@ $(document).ready(function() {
     $(document).on('change', '.producto-select', function() {
         const selectedOption = $(this).find('option:selected');
         const row = $(this).closest('.item-row');
-        const cantidadInput = row.find('.cantidad-input');
+        const cantidadSelect = row.find('.cantidad-select');
         
         if (selectedOption.val()) {
             const gramaje = parseFloat(selectedOption.data('gramaje')) || 0;
@@ -368,7 +489,7 @@ $(document).ready(function() {
             row.find('.linea-input').val(linea);
             
             // Calculate peso total
-            const cantidad = parseFloat(cantidadInput.val()) || 0;
+            const cantidad = parseFloat(cantidadSelect.val()) || 0;
             const pesoTotal = cantidad * gramaje;
             row.find('.peso-total-input').val(pesoTotal.toFixed(2));
         } else {
@@ -380,8 +501,8 @@ $(document).ready(function() {
         }
     });
     
-    // Cantidad change handler
-    $(document).on('input', '.cantidad-input', function() {
+    // Cantidad change handler - actualizado para funcionar con select
+    $(document).on('change', '.cantidad-select', function() {
         const row = $(this).closest('.item-row');
         const cantidad = parseFloat($(this).val()) || 0;
         const gramaje = parseFloat(row.find('.gramaje-input').val()) || 0;

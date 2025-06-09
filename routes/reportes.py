@@ -351,7 +351,7 @@ def exportar_pedidos_excel():
 
 @reportes_bp.route('/exportar-consolidado-excel')
 def exportar_consolidado_excel():
-    """Exportar consolidado de productos a Excel"""
+    """Exportar consolidado de productos a Excel con la misma estructura que la tabla HTML"""
     db = db_config.get_session()
     try:
         # Aplicar los mismos filtros que en el consolidado
@@ -398,6 +398,41 @@ def exportar_consolidado_excel():
 
         resultados = query.all()
 
+        # Agrupar por formulación (misma lógica que en consolidado_productos)
+        resultados_agrupados = {}
+        subtotales_formulacion = {}
+        total_cantidad = 0
+        total_peso = 0
+
+        for resultado in resultados:
+            formulacion_key = resultado.formulacion_grupo or 'Sin Formulación'
+            
+            if formulacion_key not in resultados_agrupados:
+                resultados_agrupados[formulacion_key] = []
+                subtotales_formulacion[formulacion_key] = {'cantidad': 0, 'peso': 0}
+
+            # Crear objeto de item
+            item = {
+                'cliente_nombre': resultado.cliente_nombre or 'Cliente no registrado',
+                'cliente_nit': resultado.cliente_nit or 'N/A',
+                'categoria': resultado.categoria_linea,
+                'formulacion': resultado.formulacion_grupo,
+                'referencia': resultado.referencia_de_producto,
+                'pedido_id': resultado.pedido_id,
+                'total_cantidad': resultado.cantidad or 0,
+                'total_peso': resultado.peso_total_g_item or 0
+            }
+
+            resultados_agrupados[formulacion_key].append(item)
+            
+            # Actualizar subtotales
+            subtotales_formulacion[formulacion_key]['cantidad'] += item['total_cantidad']
+            subtotales_formulacion[formulacion_key]['peso'] += item['total_peso']
+            
+            # Actualizar totales generales
+            total_cantidad += item['total_cantidad']
+            total_peso += item['total_peso']
+
         # Crear libro de Excel
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -406,7 +441,14 @@ def exportar_consolidado_excel():
         # Estilos
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        formulacion_font = Font(bold=True, color="000000")
+        formulacion_fill = PatternFill(start_color="D1ECF1", end_color="D1ECF1", fill_type="solid")  # Azul claro
+        subtotal_font = Font(bold=True, color="000000")
+        subtotal_fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")  # Amarillo claro
+        total_font = Font(bold=True, color="000000")
+        total_fill = PatternFill(start_color="E9ECEF", end_color="E9ECEF", fill_type="solid")  # Gris claro
         center_alignment = Alignment(horizontal="center")
+        right_alignment = Alignment(horizontal="right")
 
         # Encabezados
         headers = [
@@ -420,33 +462,94 @@ def exportar_consolidado_excel():
             cell.fill = header_fill
             cell.alignment = center_alignment
 
-        # Datos
+        # Datos con estructura igual a la tabla HTML
         row = 2
-        for resultado in resultados:
-            cliente_nombre = resultado.cliente_nombre or 'Cliente no registrado'
-            cliente_nit = resultado.cliente_nit or 'N/A'
-            
-            ws.cell(row=row, column=1, value=f"{cliente_nombre} ({cliente_nit})")
-            ws.cell(row=row, column=2, value=resultado.categoria_linea or '-')
-            ws.cell(row=row, column=3, value=resultado.formulacion_grupo or '-')
-            ws.cell(row=row, column=4, value=resultado.referencia_de_producto or '-')
-            ws.cell(row=row, column=5, value=resultado.pedido_id)
-            ws.cell(row=row, column=6, value=resultado.cantidad or 0)
-            ws.cell(row=row, column=7, value=resultado.peso_total_g_item or 0)
+        
+        if resultados_agrupados:
+            for formulacion_key, items in resultados_agrupados.items():
+                # Encabezado de Formulación
+                cell = ws.cell(row=row, column=1, value=f"🧪 {formulacion_key}")
+                cell.font = formulacion_font
+                cell.fill = formulacion_fill
+                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+                row += 1
+                
+                # Items de la formulación
+                for item in items:
+                    cliente_display = f"{item['cliente_nombre']} ({item['cliente_nit']})"
+                    
+                    ws.cell(row=row, column=1, value=cliente_display)
+                    ws.cell(row=row, column=2, value=item['categoria'] or '-')
+                    ws.cell(row=row, column=3, value=item['formulacion'] or '-')
+                    ws.cell(row=row, column=4, value=item['referencia'] or '-')
+                    ws.cell(row=row, column=5, value=item['pedido_id'])
+                    
+                    # Cantidad y peso con formato numérico y alineación derecha
+                    cantidad_cell = ws.cell(row=row, column=6, value=round(item['total_cantidad'], 2))
+                    cantidad_cell.alignment = right_alignment
+                    peso_cell = ws.cell(row=row, column=7, value=round(item['total_peso'], 2))
+                    peso_cell.alignment = right_alignment
+                    
+                    row += 1
+                
+                # Subtotal de Formulación
+                subtotal_cell = ws.cell(row=row, column=5, value=f"🧮 Subtotal {formulacion_key}:")
+                subtotal_cell.font = subtotal_font
+                subtotal_cell.fill = subtotal_fill
+                subtotal_cell.alignment = right_alignment
+                
+                # Merge las primeras 5 columnas para el texto del subtotal
+                ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
+                
+                # Subtotal cantidad
+                subtotal_cantidad_cell = ws.cell(row=row, column=6, value=round(subtotales_formulacion[formulacion_key]['cantidad'], 2))
+                subtotal_cantidad_cell.font = subtotal_font
+                subtotal_cantidad_cell.fill = subtotal_fill
+                subtotal_cantidad_cell.alignment = right_alignment
+                
+                # Subtotal peso
+                subtotal_peso_cell = ws.cell(row=row, column=7, value=round(subtotales_formulacion[formulacion_key]['peso'], 2))
+                subtotal_peso_cell.font = subtotal_font
+                subtotal_peso_cell.fill = subtotal_fill
+                subtotal_peso_cell.alignment = right_alignment
+                
+                row += 1
+                
+                # Línea en blanco para separar formulaciones
+                row += 1
+        else:
+            # No hay resultados
+            no_results_cell = ws.cell(row=row, column=1, value="No se encontraron resultados con los filtros seleccionados")
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+            no_results_cell.alignment = center_alignment
             row += 1
 
+        # Total General
+        total_cell = ws.cell(row=row, column=5, value="🔢 TOTALES GENERALES:")
+        total_cell.font = total_font
+        total_cell.fill = total_fill
+        total_cell.alignment = right_alignment
+        
+        # Merge las primeras 5 columnas para el texto del total
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
+        
+        # Total cantidad
+        total_cantidad_cell = ws.cell(row=row, column=6, value=round(total_cantidad, 2))
+        total_cantidad_cell.font = total_font
+        total_cantidad_cell.fill = total_fill
+        total_cantidad_cell.alignment = right_alignment
+        
+        # Total peso
+        total_peso_cell = ws.cell(row=row, column=7, value=round(total_peso, 2))
+        total_peso_cell.font = total_font
+        total_peso_cell.fill = total_fill
+        total_peso_cell.alignment = right_alignment
+
         # Ajustar ancho de columnas
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+        column_widths = [30, 15, 20, 25, 12, 12, 15]  # Anchos específicos para cada columna
+        for i, width in enumerate(column_widths, 1):
+            column_letter = openpyxl.utils.get_column_letter(i)
+            ws.column_dimensions[column_letter].width = width
 
         # Crear respuesta
         output = io.BytesIO()

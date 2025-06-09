@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from config.database import db_config
 from models import Producto
 from utils.helpers import get_current_year
 import pandas as pd
+from sqlalchemy import or_, and_
 
 productos_bp = Blueprint('productos', __name__, url_prefix='/productos')
 
@@ -14,8 +15,118 @@ def lista():
     db = db_config.get_session()
     try:
         productos = db.query(Producto).all()
+        
+        # Obtener valores únicos para los filtros
+        grupos = db.query(Producto.formulacion_grupo).distinct().filter(Producto.formulacion_grupo.isnot(None)).all()
+        lineas = db.query(Producto.categoria_linea).distinct().filter(Producto.categoria_linea.isnot(None)).all()
+        
+        grupos = [g[0] for g in grupos if g[0]]
+        lineas = [l[0] for l in lineas if l[0]]
+        
         current_year = get_current_year()
-        return render_template('productos_list.html', productos=productos, current_year=current_year)
+        return render_template('productos_list.html', 
+                             productos=productos, 
+                             grupos=grupos,
+                             lineas=lineas,
+                             current_year=current_year)
+    finally:
+        db.close()
+
+@productos_bp.route('/api/buscar')
+def api_buscar():
+    """API para búsqueda de productos con autocompletado para pedidos"""
+    db = db_config.get_session()
+    try:
+        # Obtener término de búsqueda
+        termino = request.args.get('q', '').strip()
+        limite = int(request.args.get('limit', 10))  # Limitar resultados para rendimiento
+        
+        if len(termino) < 1:  # Mínimo 1 carácter para iniciar búsqueda
+            return jsonify([])
+        
+        # Buscar productos por código o referencia
+        query = db.query(Producto).filter(
+            or_(
+                Producto.codigo.ilike(f'%{termino}%'),
+                Producto.referencia_de_producto.ilike(f'%{termino}%')
+            )
+        ).limit(limite)
+        
+        productos = query.all()
+        
+        # Formatear resultados para autocompletado
+        resultados = []
+        for p in productos:
+            resultados.append({
+                'id': p.id,
+                'codigo': p.codigo,
+                'referencia': p.referencia_de_producto,
+                'display': f"{p.codigo} - {p.referencia_de_producto}",
+                'gramaje_g': p.gramaje_g,
+                'formulacion_grupo': p.formulacion_grupo or '',
+                'categoria_linea': p.categoria_linea or ''
+            })
+        
+        return jsonify(resultados)
+        
+    except Exception as e:
+        return jsonify([]), 500
+    finally:
+        db.close()
+
+@productos_bp.route('/api/filtrar')
+def api_filtrar():
+    """API para filtrar productos en tiempo real"""
+    db = db_config.get_session()
+    try:
+        # Obtener parámetros de filtrado
+        busqueda = request.args.get('busqueda', '').strip()
+        grupo = request.args.get('grupo', '').strip()
+        linea = request.args.get('linea', '').strip()
+        
+        # Construir query base
+        query = db.query(Producto)
+        
+        # Aplicar filtros
+        if busqueda:
+            query = query.filter(
+                or_(
+                    Producto.codigo.ilike(f'%{busqueda}%'),
+                    Producto.referencia_de_producto.ilike(f'%{busqueda}%')
+                )
+            )
+        
+        if grupo:
+            query = query.filter(Producto.formulacion_grupo == grupo)
+            
+        if linea:
+            query = query.filter(Producto.categoria_linea == linea)
+        
+        productos = query.all()
+        
+        # Convertir a JSON
+        productos_data = []
+        for p in productos:
+            productos_data.append({
+                'id': p.id,
+                'codigo': p.codigo,
+                'referencia_de_producto': p.referencia_de_producto,
+                'gramaje_g': p.gramaje_g,
+                'formulacion_grupo': p.formulacion_grupo or '',
+                'categoria_linea': p.categoria_linea or ''
+            })
+        
+        return jsonify({
+            'success': True,
+            'productos': productos_data,
+            'total': len(productos_data)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
     finally:
         db.close()
 

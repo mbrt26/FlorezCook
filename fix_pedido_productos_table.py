@@ -85,8 +85,9 @@ def add_missing_columns_pedido_productos(engine):
     """Agrega las columnas faltantes en la tabla pedido_productos"""
     logger.info("=== AGREGANDO COLUMNAS FALTANTES A PEDIDO_PRODUCTOS ===")
     
-    # Columnas que necesita la tabla según el modelo SQLAlchemy
+    # Columnas que necesita la tabla según el modelo SQLAlchemy y el error reportado
     required_columns = {
+        'fecha_pedido_item': 'DATE NOT NULL',  # AGREGADO: Columna que está causando el error
         'fecha_creacion': 'DATETIME DEFAULT CURRENT_TIMESTAMP',
         'fecha_modificacion': 'DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
     }
@@ -133,26 +134,45 @@ def verify_fix(engine):
     
     try:
         with engine.connect() as conn:
-            # Intentar hacer la misma consulta que estaba fallando
-            test_sql = """
-                SELECT fecha_creacion 
-                FROM pedido_productos 
-                LIMIT 1
-            """
+            # Verificar todas las columnas críticas que estaban faltando
+            test_columns = ['fecha_pedido_item', 'fecha_creacion', 'fecha_modificacion']
             
+            for column in test_columns:
+                try:
+                    test_sql = f"SELECT {column} FROM pedido_productos LIMIT 1"
+                    result = conn.execute(text(test_sql))
+                    logger.info(f"✅ La columna '{column}' está accesible en pedido_productos")
+                except Exception as e:
+                    logger.error(f"❌ Error verificando columna {column}: {e}")
+                    return False
+            
+            # Intentar el INSERT que estaba fallando originalmente
             try:
-                result = conn.execute(text(test_sql))
-                logger.info("✅ La columna 'fecha_creacion' está accesible en pedido_productos")
+                test_insert = """
+                    INSERT INTO pedido_productos 
+                    (pedido_id, producto_id, fecha_pedido_item, cantidad, gramaje_g_item, 
+                     peso_total_g_item, grupo_item, linea_item, comentarios_item, 
+                     fecha_de_entrega_item, estado_del_pedido_item, fecha_creacion, fecha_modificacion) 
+                    VALUES (999999, 999999, '2025-06-09', 1, 1.0, 1.0, 'test', 'test', 'test', 
+                            '2025-06-11', 'Test', NOW(), NOW())
+                """
+                conn.execute(text(test_insert))
                 
-                # Contar registros
-                result = conn.execute(text("SELECT COUNT(*) FROM pedido_productos")).fetchone()
-                logger.info(f"📊 Tabla pedido_productos: {result[0]} registros")
+                # Eliminar el registro de prueba
+                conn.execute(text("DELETE FROM pedido_productos WHERE pedido_id = 999999"))
+                conn.commit()
                 
-                return True
+                logger.info("✅ El INSERT que estaba fallando ahora funciona correctamente")
                 
             except Exception as e:
-                logger.error(f"❌ Error verificando columna fecha_creacion: {e}")
+                logger.error(f"❌ El INSERT de prueba aún falla: {e}")
                 return False
+            
+            # Contar registros
+            result = conn.execute(text("SELECT COUNT(*) FROM pedido_productos")).fetchone()
+            logger.info(f"📊 Tabla pedido_productos: {result[0]} registros")
+            
+            return True
                 
     except Exception as e:
         logger.error(f"❌ Error en verificación final: {e}")

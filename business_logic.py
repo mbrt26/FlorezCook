@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 # Corregir el import de models para que funcione en App Engine Standard
 from models import Cliente, Producto, Pedido, PedidoProducto
 import datetime
+from datetime import date, timedelta
 
 # Configurar logger para el módulo
 logger = logging.getLogger(__name__)
@@ -149,7 +150,7 @@ def manejar_input_identificacion_cliente(db: Session, numero_identificacion_ingr
 
     return new_state
 
-def actualizar_info_producto_en_pedido(db: Session, producto_id_seleccionado: int, cantidad: float, item_index: int, current_pedido_items: list) -> list:
+def actualizar_info_producto_en_pedido(db: Session, producto_id_seleccionado: int, cantidad: int, item_index: int, current_pedido_items: list) -> list:
     """
     Actualiza la información de un ítem específico en la lista de productos de un pedido,
     basado en el producto seleccionado y la cantidad. Replica la lógica de 'InfoProductos'.
@@ -157,7 +158,7 @@ def actualizar_info_producto_en_pedido(db: Session, producto_id_seleccionado: in
     Args:
         db: Sesión de SQLAlchemy.
         producto_id_seleccionado: ID del producto que el usuario seleccionó para este ítem.
-        cantidad: La cantidad ingresada para este ítem.
+        cantidad: La cantidad ingresada para este ítem (ahora es entero).
         item_index: El índice del ítem en la lista current_pedido_items que se va a actualizar.
         current_pedido_items: La lista actual de diccionarios, donde cada diccionario representa un ítem del pedido.
 
@@ -183,6 +184,7 @@ def actualizar_info_producto_en_pedido(db: Session, producto_id_seleccionado: in
             item_a_actualizar['linea_item'] = producto_info.categoria_linea
             item_a_actualizar['grupo_item'] = producto_info.formulacion_grupo
             
+            # Calcular el peso total basado en la cantidad (entero) y el gramaje del producto
             if cantidad is not None and producto_info.gramaje_g is not None:
                 item_a_actualizar['peso_total_g_item'] = cantidad * producto_info.gramaje_g
             else:
@@ -278,17 +280,23 @@ def validar_datos_pedido(form_data: dict) -> list:
     if not pedido_items:
         errors.append("Debe agregar al menos un producto al pedido.")
     else:
+        fecha_minima_entrega = calcular_fecha_minima_entrega()
+        
         for i, item in enumerate(pedido_items):
             if not item.get('producto_id'):
                 errors.append(f"Ítem {i+1}: Debe seleccionar un producto.")
-            if not item.get('cantidad') or float(item.get('cantidad', 0)) <= 0:
+            if not item.get('cantidad') or int(item.get('cantidad', 0)) <= 0:  # CAMBIADO: usar int() en lugar de float()
                 errors.append(f"Ítem {i+1}: La cantidad debe ser mayor que cero.")
             if not item.get('fecha_de_entrega_item'):
                 errors.append(f"Ítem {i+1}: La fecha de entrega es obligatoria.")
+            
             # Validar que la fecha de entrega sea una fecha válida (formato YYYY-MM-DD)
+            # y que sea posterior a la fecha mínima de entrega
             try:
                 if item.get('fecha_de_entrega_item'):
-                    datetime.date.fromisoformat(item.get('fecha_de_entrega_item'))
+                    fecha_entrega = datetime.date.fromisoformat(item.get('fecha_de_entrega_item'))
+                    if fecha_entrega < fecha_minima_entrega:
+                        errors.append(f"Ítem {i+1}: La fecha de entrega debe ser al menos {fecha_minima_entrega.strftime('%d/%m/%Y')} (2 días hábiles desde hoy).")
             except ValueError:
                 errors.append(f"Ítem {i+1}: Formato de fecha de entrega inválido. Usar YYYY-MM-DD.")
 
@@ -402,12 +410,12 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
             pedido_producto = PedidoProducto(
                 producto_id=item_data.get('producto_id'),
                 fecha_pedido_item=fecha_pedido_item,  # AGREGADO: Columna faltante
-                cantidad=float(item_data.get('cantidad')),
+                cantidad=int(item_data.get('cantidad')),  # CAMBIADO: De float a int
                 gramaje_g_item=float(item_data.get('gramaje_g_item')),
                 peso_total_g_item=float(item_data.get('peso_total_g_item')),
                 grupo_item=item_data.get('grupo_item'),
                 linea_item=item_data.get('linea_item'),
-                observaciones_item=item_data.get('observaciones_item'),
+                comentarios_item=item_data.get('comentarios_item'),  # CAMBIADO: De observaciones_item a comentarios_item
                 fecha_de_entrega_item=fecha_entrega_obj,
                 estado_del_pedido_item=item_data.get('estado_del_pedido_item', 'Pendiente')
             )
@@ -620,4 +628,28 @@ def invalidate_productos_cache():
     global _productos_cache, _cache_timestamp
     _productos_cache = None
     _cache_timestamp = None
+
+def calcular_fecha_minima_entrega(fecha_base=None):
+    """
+    Calcula la fecha mínima de entrega sumando 2 días hábiles a la fecha base.
+    
+    Args:
+        fecha_base: Fecha desde la cual calcular. Si es None, usa la fecha actual.
+    
+    Returns:
+        date: Fecha mínima de entrega
+    """
+    if fecha_base is None:
+        fecha_base = date.today()
+    
+    dias_sumados = 0
+    fecha_resultado = fecha_base
+    
+    while dias_sumados < 2:
+        fecha_resultado += timedelta(days=1)
+        # Solo contar días de lunes a viernes (0=lunes, 6=domingo)
+        if fecha_resultado.weekday() < 5:  # 0-4 son días laborables
+            dias_sumados += 1
+    
+    return fecha_resultado
 

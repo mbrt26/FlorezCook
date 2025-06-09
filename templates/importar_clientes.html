@@ -13,7 +13,9 @@
             <h5 class="alert-heading">Instrucciones para importar clientes</h5>
             <p class="mb-2">Siga estos pasos para importar clientes desde un archivo Excel:</p>
             <ol class="mb-0">
-                <li>Descargue la <a href="#" id="downloadTemplate">plantilla de ejemplo</a> para asegurar el formato correcto.</li>
+                <li>Descargue la <a href="{{ url_for('clientes.descargar_plantilla') }}" class="fw-bold text-decoration-none">
+                    <i class="fas fa-download me-1"></i>plantilla de ejemplo
+                </a> para asegurar el formato correcto.</li>
                 <li>Complete los datos de los clientes en la plantilla.</li>
                 <li>Seleccione el archivo Excel y haga clic en "Importar".</li>
             </ol>
@@ -47,28 +49,4 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // Descargar plantilla de ejemplo
-    $('#downloadTemplate').click(function(e) {
-        e.preventDefault();
-        // Crear un libro de Excel con las columnas necesarias
-        const data = [
-            ['nombre_comercial', 'razon_social', 'tipo_identificacion', 'numero_identificacion', 'digito_verificacion', 'direccion', 'ciudad', 'departamento', 'pais', 'telefono', 'email', 'responsable', 'cargo', 'actividad_economica'],
-            ['Ejemplo S.A.S.', 'Ejemplo S.A.S.', 'NIT', '900123456', '7', 'Carrera 1 # 2-3', 'Bogotá', 'Bogotá D.C.', 'Colombia', '6011234567', 'ejemplo@empresa.com', 'Juan Pérez', 'Gerente', 'Comercio']
-        ];
-        
-        // Crear un libro de Excel
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
-        
-        // Generar el archivo y forzar la descarga
-        XLSX.writeFile(wb, 'plantilla_importar_clientes.xlsx');
-    });
-});
-</script>
 {% endblock %}

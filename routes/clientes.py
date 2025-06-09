@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from config.database import db_config
 from models import Cliente
 from utils.helpers import get_current_year, DEPARTAMENTOS_CIUDADES
 import pandas as pd
 from sqlalchemy.exc import IntegrityError
+import io
+from datetime import datetime
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')  # Restore the prefix
 
@@ -325,3 +327,45 @@ def importar():
 def redirect_importar():
     """Redirige a la página de importación de clientes"""
     return redirect(url_for('clientes.importar'))
+
+@clientes_bp.route('/plantilla-excel')
+def descargar_plantilla():
+    """Descargar plantilla Excel para importar clientes"""
+    try:
+        # Crear un DataFrame con las columnas y un ejemplo
+        datos_ejemplo = {
+            'nombre_comercial': ['Ejemplo S.A.S.'],
+            'razon_social': ['Ejemplo S.A.S.'],
+            'tipo_identificacion': ['NIT'],
+            'numero_identificacion': ['900123456'],
+            'email': ['ejemplo@empresa.com'],
+            'telefono': ['6011234567'],
+            'direccion': ['Carrera 1 # 2-3'],
+            'ciudad': ['Bogotá'],
+            'departamento': ['Bogotá D.C.']
+        }
+        
+        df = pd.DataFrame(datos_ejemplo)
+        
+        # Crear un buffer en memoria
+        output = io.BytesIO()
+        
+        # Escribir el DataFrame al buffer como Excel sin comentarios
+        df.to_excel(output, engine='openpyxl', sheet_name='Clientes', index=False)
+        
+        output.seek(0)
+        
+        # Generar nombre del archivo con fecha
+        fecha_actual = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nombre_archivo = f'plantilla_clientes_{fecha_actual}.xlsx'
+        
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=nombre_archivo,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        flash(f'Error al generar la plantilla: {str(e)}', 'danger')
+        return redirect(url_for('clientes.importar'))
