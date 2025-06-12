@@ -72,7 +72,6 @@
                             <th>Cliente</th>
                             <th>Identificación</th>
                             <th>Productos</th>
-                            <th>Total (g)</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -85,7 +84,6 @@
                             <td>{{ pedido.cliente_asociado.nombre_comercial if pedido.cliente_asociado else pedido.nombre_cliente_ingresado or 'N/A' }}</td>
                             <td>{{ pedido.cliente_asociado.numero_identificacion if pedido.cliente_asociado else pedido.numero_identificacion_cliente_ingresado or 'N/A' }}</td>
                             <td>{{ pedido.items|length }} producto(s)</td>
-                            <td>{{ "%0.2f"|format((pedido.items|selectattr('peso_total_g_item')|sum(attribute='peso_total_g_item')) or 0) }}</td>
                             <td>
                                 <span class="badge bg-{{ 'success' if pedido.estado_pedido_general == 'Entregado' else 'warning' if pedido.estado_pedido_general == 'En Proceso' else 'danger' if pedido.estado_pedido_general == 'Cancelado' else 'secondary' }}">
                                     {{ pedido.estado_pedido_general }}

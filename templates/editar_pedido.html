@@ -108,7 +108,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label class="form-label">Cantidad</label>
                             <select class="form-select cantidad-select" name="cantidad_{{ loop.index0 }}" required>
                                 <option value="">Seleccionar cantidad...</option>
@@ -117,25 +117,15 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label class="form-label">Gramaje (g)</label>
                             <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_{{ loop.index0 }}" 
                                    value="{{ item.gramaje_g_item }}" readonly>
                         </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Peso Total (g)</label>
-                            <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_{{ loop.index0 }}" 
-                                   value="{{ item.peso_total_g_item }}" readonly>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Grupo</label>
-                            <input type="text" class="form-control grupo-input" name="grupo_item_{{ loop.index0 }}" 
-                                   value="{{ item.grupo_item or '' }}" readonly>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Línea</label>
-                            <input type="text" class="form-control linea-input" name="linea_item_{{ loop.index0 }}" 
-                                   value="{{ item.linea_item or '' }}" readonly>
+                        <div class="col-md-2">
+                            <label class="form-label">Comentarios</label>
+                            <input type="text" class="form-control" name="comentarios_item_{{ loop.index0 }}" 
+                                   value="{{ item.comentarios_item or '' }}">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Fecha Entrega</label>
@@ -143,23 +133,10 @@
                                    value="{{ item.fecha_de_entrega_item.strftime('%Y-%m-%d') if item.fecha_de_entrega_item else '' }}">
                         </div>
                         <div class="col-md-1">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" name="estado_del_pedido_item_{{ loop.index0 }}">
-                                <option value="Pendiente" {% if item.estado_del_pedido_item == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                <option value="En Proceso" {% if item.estado_del_pedido_item == 'En Proceso' %}selected{% endif %}>En Proceso</option>
-                                <option value="Completado" {% if item.estado_del_pedido_item == 'Completado' %}selected{% endif %}>Completado</option>
-                                <option value="Cancelado" {% if item.estado_del_pedido_item == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Comentarios</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="comentarios_item_{{ loop.index0 }}" 
-                                       value="{{ item.comentarios_item or '' }}">
-                                <button type="button" class="btn btn-danger btn-remove-item" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                            <label class="form-label">Acciones</label>
+                            <button type="button" class="btn btn-danger btn-remove-item w-100" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                     {% else %}
@@ -178,7 +155,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label class="form-label">Cantidad</label>
                             <select class="form-select cantidad-select" name="cantidad_0" required>
                                 <option value="">Seleccionar cantidad...</option>
@@ -187,43 +164,23 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label class="form-label">Gramaje (g)</label>
                             <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_0" readonly>
                         </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Peso Total (g)</label>
-                            <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_0" readonly>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Grupo</label>
-                            <input type="text" class="form-control grupo-input" name="grupo_item_0" readonly>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Línea</label>
-                            <input type="text" class="form-control linea-input" name="linea_item_0" readonly>
+                        <div class="col-md-2">
+                            <label class="form-label">Comentarios</label>
+                            <input type="text" class="form-control" name="comentarios_item_0">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Fecha Entrega</label>
                             <input type="date" class="form-control" name="fecha_de_entrega_item_0">
                         </div>
                         <div class="col-md-1">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" name="estado_del_pedido_item_0">
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="En Proceso">En Proceso</option>
-                                <option value="Completado">Completado</option>
-                                <option value="Cancelado">Cancelado</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Comentarios</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="comentarios_item_0">
-                                <button type="button" class="btn btn-danger btn-remove-item" disabled>
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                            <label class="form-label">Acciones</label>
+                            <button type="button" class="btn btn-danger btn-remove-item w-100" disabled>
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                     {% endfor %}
@@ -378,49 +335,29 @@ $(document).ready(function() {
                         <option value="">Seleccionar producto</option>
                     </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label class="form-label">Cantidad</label>
                     <select class="form-select cantidad-select" name="cantidad_${newIndex}" required>
                         ${cantidadOptions}
                     </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label class="form-label">Gramaje (g)</label>
                     <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_${newIndex}" readonly>
                 </div>
-                <div class="col-md-1">
-                    <label class="form-label">Peso Total (g)</label>
-                    <input type="number" step="0.01" class="form-control peso-total-input" name="peso_total_g_item_${newIndex}" readonly>
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label">Grupo</label>
-                    <input type="text" class="form-control grupo-input" name="grupo_item_${newIndex}" readonly>
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label">Línea</label>
-                    <input type="text" class="form-control linea-input" name="linea_item_${newIndex}" readonly>
+                <div class="col-md-2">
+                    <label class="form-label">Comentarios</label>
+                    <input type="text" class="form-control" name="comentarios_item_${newIndex}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Fecha Entrega</label>
                     <input type="date" class="form-control" name="fecha_de_entrega_item_${newIndex}" min="${obtenerFechaMinimaEntrega()}">
                 </div>
                 <div class="col-md-1">
-                    <label class="form-label">Estado</label>
-                    <select class="form-select" name="estado_del_pedido_item_${newIndex}">
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="En Proceso" selected>En Proceso</option>
-                        <option value="Completado">Completado</option>
-                        <option value="Cancelado">Cancelado</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label">Comentarios</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="comentarios_item_${newIndex}">
-                        <button type="button" class="btn btn-danger btn-remove-item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                    <label class="form-label">Acciones</label>
+                    <button type="button" class="btn btn-danger btn-remove-item w-100">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             </div>
         `);

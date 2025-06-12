@@ -105,18 +105,35 @@
             position: relative;
         }
         
+        /* Contenedor de tabla con overflow controlado */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        
+        .table-productos {
+            position: relative;
+        }
+        
+        .table-productos td {
+            position: relative;
+            overflow: visible;
+        }
+        
         .producto-suggestions {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            z-index: 1000;
+            z-index: 9999 !important;  /* Z-index muy alto para estar por encima de todo */
             background-color: white;
             border: 1px solid #ddd;
             border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            max-height: 300px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+            max-height: 400px;  /* Aumentar altura máxima */
             overflow-y: auto;
+            min-width: 350px;  /* Ancho mínimo para mostrar el contenido completo */
+            width: max-content;  /* Ajustar al contenido */
+            max-width: 500px;  /* Límite máximo de ancho */
         }
         
         .producto-suggestion {
@@ -124,6 +141,9 @@
             border-bottom: 1px solid #f8f9fa;
             cursor: pointer;
             transition: background-color 0.15s ease-in-out;
+            white-space: nowrap;  /* Evitar que el texto se corte */
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
         
         .producto-suggestion:hover,
@@ -137,11 +157,31 @@
         
         .producto-suggestion strong {
             color: var(--florez-primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .producto-suggestion .text-muted {
+            display: block;
+            font-size: 0.85rem;
+            line-height: 1.2;
+            max-width: 100%;
+            white-space: normal;  /* Permitir salto de línea en la descripción */
         }
         
         .producto-search:focus + .producto-suggestions {
             border-color: #86b7fe;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        /* Asegurar que el dropdown se vea correctamente en dispositivos móviles */
+        @media (max-width: 768px) {
+            .producto-suggestions {
+                min-width: 280px;
+                max-width: 90vw;
+                left: -10px;
+                right: -10px;
+            }
         }
         
         /* Estilos para autocompletado de cantidades */
@@ -154,13 +194,14 @@
             top: 100%;
             left: 0;
             right: 0;
-            z-index: 1000;
+            z-index: 9998 !important;  /* Z-index alto pero menor que productos */
             background-color: white;
             border: 1px solid #ddd;
             border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            max-height: 200px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+            max-height: 250px;
             overflow-y: auto;
+            min-width: 200px;
         }
         
         .cantidad-suggestion {
@@ -202,7 +243,8 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <i class="fas fa-bread-slice me-2"></i>FlorezCook
+                <img src="{{ url_for('static', filename='logo1.png') }}" alt="Flórez" height="40" class="me-2">
+                FlorezCook
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
