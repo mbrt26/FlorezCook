@@ -1,0 +1,18 @@
+/* Estilos específicos para pantallas pequeñas */
+@media (max-width: 576px) {
+    body {
+        font-size: 0.95rem;
+    }
+    h1, h2, h3, h4, h5 {
+        font-size: 1.1rem;
+    }
+    .navbar-nav .nav-link {
+        padding: 0.5rem 1rem;
+    }
+    .card {
+        margin-bottom: 1rem;
+    }
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
