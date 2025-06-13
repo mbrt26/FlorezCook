@@ -95,6 +95,7 @@ def create_app():
         from routes.clientes import clientes_bp, api_clientes_bp
         from routes.pedidos import pedidos_bp
         from routes.reportes import reportes_bp
+        from routes.indicadores import indicadores_bp
         
         # Registrar blueprints
         app.register_blueprint(health_bp)
@@ -103,6 +104,7 @@ def create_app():
         app.register_blueprint(api_clientes_bp)
         app.register_blueprint(pedidos_bp, url_prefix='/pedidos')
         app.register_blueprint(reportes_bp, url_prefix='/reportes')
+        app.register_blueprint(indicadores_bp)
         
         # Solo log en desarrollo
         if not is_production:
@@ -127,6 +129,7 @@ def create_app():
                 <li><a href="/importar-clientes">📥 Importar Clientes</a></li>
                 <li><a href="/pedidos/form">📋 Gestión de Pedidos</a></li>
                 <li><a href="/reportes/pedidos">📊 Reportes</a></li>
+                <li><a href="/indicadores">📈 Indicadores y KPIs</a></li>
                 <li><a href="/healthz">🔍 Estado del Sistema</a></li>
             </ul>
             <footer style="margin-top: 50px; text-align: center; color: #666;">

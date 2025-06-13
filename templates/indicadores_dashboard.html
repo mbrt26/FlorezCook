@@ -1,0 +1,550 @@
+{% extends 'base.html' %}
+{% block title %}Indicadores y KPIs | FlorezCook{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    
+    .kpi-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #e85a0c;
+    }
+    
+    .kpi-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 20px 0;
+    }
+    
+    .chart-container-large {
+        height: 400px;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #e85a0c, #ff7f50);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px 8px 0 0;
+        margin: 0;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    
+    .top-items-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .top-item {
+        padding: 10px 15px;
+        border-left: 4px solid #e85a0c;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .badge-custom {
+        background: #e85a0c;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    @media (max-width: 768px) {
+        .kpi-number {
+            font-size: 2rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+        
+        .top-items-list {
+            max-height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">📊 Indicadores y KPIs</h1>
+            <p class="text-muted">Dashboard de métricas y análisis de negocio</p>
+        </div>
+        <div>
+            <img src="{{ url_for('static', filename='logo1.png') }}" alt="Flórez" height="40">
+        </div>
+    </div>
+
+    <!-- Filtros de Fecha -->
+    <div class="filter-section">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                       value="{{ fecha_inicio }}" required>
+            </div>
+            <div class="col-md-4">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                       value="{{ fecha_fin }}" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Actualizar Indicadores
+                </button>
+            </div>
+        </form>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Período seleccionado: {{ fecha_inicio }} al {{ fecha_fin }}
+            </small>
+        </div>
+    </div>
+
+    <!-- KPIs Principales -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="fas fa-chart-line me-2"></i>Resumen Ejecutivo</h4>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card kpi-card h-100">
+                <div class="card-body text-center">
+                    <div class="kpi-number">{{ indicadores.ventas.resumen.total_pedidos }}</div>
+                    <div class="kpi-label">Total Pedidos</div>
+                    <small class="text-muted">{{ indicadores.ventas.resumen.promedio_productos_pedido }} productos/pedido</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card kpi-card h-100">
+                <div class="card-body text-center">
+                    <div class="kpi-number">{{ indicadores.ventas.resumen.total_productos_vendidos }}</div>
+                    <div class="kpi-label">Productos Vendidos</div>
+                    <small class="text-muted">{{ indicadores.ventas.resumen.peso_total_kg }} kg total</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card kpi-card h-100">
+                <div class="card-body text-center">
+                    <div class="kpi-number">{{ indicadores.clientes.resumen.clientes_activos }}</div>
+                    <div class="kpi-label">Clientes Activos</div>
+                    <small class="text-muted">{{ indicadores.clientes.resumen.nuevos_clientes }} nuevos</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card kpi-card h-100">
+                <div class="card-body text-center">
+                    <div class="kpi-number">{{ indicadores.operaciones.resumen.promedio_dias_entrega }}</div>
+                    <div class="kpi-label">Días Prom. Entrega</div>
+                    <small class="text-muted">{{ indicadores.operaciones.resumen.porcentaje_con_comentarios }}% con comentarios</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de Ventas -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Evolución de Ventas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="ventasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-pie-chart me-2"></i>Estados de Pedidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="estadosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análisis de Productos -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Productos Vendidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="top-items-list">
+                        {% for producto in indicadores.productos.productos_mas_vendidos[:10] %}
+                        <div class="top-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ producto.codigo }}</strong>
+                                    <div class="text-muted small">{{ producto.referencia[:50] }}...</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge-custom">{{ producto.cantidad_vendida }}</span>
+                                    <div class="small text-muted">{{ producto.pedidos_diferentes }} pedidos</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Top Clientes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="top-items-list">
+                        {% for cliente in indicadores.clientes.top_clientes %}
+                        <div class="top-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ cliente.nombre }}</strong>
+                                    <div class="text-muted small">{{ cliente.identificacion }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge-custom">{{ cliente.pedidos }}</span>
+                                    <div class="small text-muted">{{ cliente.productos_comprados }} productos</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análisis Geográfico -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Distribución Geográfica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="geograficoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Tipos de Despacho</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="despachoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análisis de Productos por Categoría -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Ventas por Grupo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="gruposChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-weight me-2"></i>Distribución por Gramaje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="gramajeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Adicionales -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="section-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Métricas Adicionales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-primary">{{ indicadores.geograficos.resumen.departamentos_atendidos }}</h4>
+                                <small class="text-muted">Departamentos Atendidos</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-success">{{ indicadores.productos.resumen.productos_vendidos_periodo }}</h4>
+                                <small class="text-muted">Productos Diferentes Vendidos</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-warning">{{ indicadores.geograficos.resumen.concentracion_top_5 }}%</h4>
+                                <small class="text-muted">Concentración Top 5 Deptos</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-info">{{ indicadores.productos.resumen.productos_sin_ventas }}</h4>
+                                <small class="text-muted">Productos Sin Ventas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Configuración global de Chart.js
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.color = '#6c757d';
+
+// Paleta de colores Flórez
+const coloresFLorez = [
+    '#e85a0c', '#ff7f50', '#ffa500', '#ff6347', '#ff4500',
+    '#dc3545', '#fd7e14', '#ffc107', '#28a745', '#17a2b8'
+];
+
+// Datos de los indicadores
+const indicadores = {{ indicadores | tojson }};
+
+// Gráfico de evolución de ventas
+const ventasCtx = document.getElementById('ventasChart').getContext('2d');
+new Chart(ventasCtx, {
+    type: 'line',
+    data: {
+        labels: indicadores.ventas.evolucion_diaria.map(d => d.fecha),
+        datasets: [{
+            label: 'Pedidos',
+            data: indicadores.ventas.evolucion_diaria.map(d => d.pedidos),
+            borderColor: '#e85a0c',
+            backgroundColor: 'rgba(232, 90, 12, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Productos',
+            data: indicadores.ventas.evolucion_diaria.map(d => d.productos),
+            borderColor: '#ff7f50',
+            backgroundColor: 'rgba(255, 127, 80, 0.1)',
+            tension: 0.4,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                position: 'left'
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                beginAtZero: true,
+                grid: {
+                    drawOnChartArea: false
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Gráfico de estados de pedidos
+const estadosCtx = document.getElementById('estadosChart').getContext('2d');
+new Chart(estadosCtx, {
+    type: 'doughnut',
+    data: {
+        labels: indicadores.ventas.estados_pedidos.map(e => e.estado),
+        datasets: [{
+            data: indicadores.ventas.estados_pedidos.map(e => e.cantidad),
+            backgroundColor: coloresFLorez.slice(0, indicadores.ventas.estados_pedidos.length)
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfico geográfico (top departamentos)
+const geograficoCtx = document.getElementById('geograficoChart').getContext('2d');
+new Chart(geograficoCtx, {
+    type: 'bar',
+    data: {
+        labels: indicadores.geograficos.pedidos_por_departamento.slice(0, 10).map(d => d.departamento),
+        datasets: [{
+            label: 'Pedidos',
+            data: indicadores.geograficos.pedidos_por_departamento.slice(0, 10).map(d => d.cantidad_pedidos),
+            backgroundColor: '#e85a0c'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Gráfico de tipos de despacho
+const despachoCtx = document.getElementById('despachoChart').getContext('2d');
+new Chart(despachoCtx, {
+    type: 'pie',
+    data: {
+        labels: indicadores.operaciones.tipos_despacho.map(t => t.tipo),
+        datasets: [{
+            data: indicadores.operaciones.tipos_despacho.map(t => t.cantidad),
+            backgroundColor: coloresFLorez.slice(0, indicadores.operaciones.tipos_despacho.length)
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfico de productos por grupo
+const gruposCtx = document.getElementById('gruposChart').getContext('2d');
+new Chart(gruposCtx, {
+    type: 'horizontalBar',
+    data: {
+        labels: indicadores.productos.productos_por_grupo.slice(0, 8).map(g => g.grupo),
+        datasets: [{
+            label: 'Productos Vendidos',
+            data: indicadores.productos.productos_por_grupo.slice(0, 8).map(g => g.total_vendido),
+            backgroundColor: '#ff7f50'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+            x: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Gráfico de distribución por gramaje
+const gramajeCtx = document.getElementById('gramajeChart').getContext('2d');
+new Chart(gramajeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: indicadores.productos.distribucion_gramaje.map(g => g.rango),
+        datasets: [{
+            data: indicadores.productos.distribucion_gramaje.map(g => g.cantidad),
+            backgroundColor: ['#e85a0c', '#ff7f50', '#ffa500', '#ff6347']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
