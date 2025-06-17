@@ -79,7 +79,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
+                <table class="table table-hover">
                     <thead class="table-dark">
                         <tr>
                             <th>Formulación</th>
@@ -100,7 +100,7 @@
                                     </td>
                                 </tr>
                                 
-                                {% for formulacion, items in formulaciones.items() %}
+                                {% for formulacion, referencias in formulaciones.items() %}
                                     <!-- Encabezado de Formulación -->
                                     <tr class="table-info">
                                         <td colspan="6" class="fw-bold ps-4">
@@ -108,24 +108,46 @@
                                         </td>
                                     </tr>
                                     
-                                    <!-- Items de la formulación -->
-                                    {% for item in items %}
-                                    <tr>
-                                        <td class="ps-5">{{ item.formulacion or '-' }}</td>
-                                        <td>{{ item.referencia or '-' }}</td>
-                                        <td>
-                                            {% if item.comentarios %}
-                                                <span class="text-muted">
-                                                    <i class="fas fa-comment me-1"></i>{{ item.comentarios }}
-                                                </span>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ item.pedido_id }}</td>
-                                        <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
-                                        <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
-                                    </tr>
+                                    {% for referencia, items in referencias.items() %}
+                                        <!-- Encabezado de Referencia de Producto -->
+                                        <tr class="table-light">
+                                            <td colspan="6" class="fw-bold ps-5">
+                                                <i class="fas fa-box me-2"></i>{{ referencia }}
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Items de la referencia -->
+                                        {% for item in items %}
+                                        <tr>
+                                            <td class="ps-5">{{ item.formulacion or '-' }}</td>
+                                            <td>{{ item.referencia or '-' }}</td>
+                                            <td>
+                                                {% if item.comentarios %}
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-comment me-1"></i>{{ item.comentarios }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.pedido_id }}</td>
+                                            <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
+                                            <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                        <!-- Subtotal de Referencia -->
+                                        <tr class="table-success">
+                                            <td colspan="4" class="text-end fw-bold ps-5">
+                                                <i class="fas fa-box-open me-1"></i>Subtotal {{ referencia }}:
+                                            </td>
+                                            <td class="text-end fw-bold">
+                                                {{ "%0.2f"|format(subtotales_referencia[categoria + '|' + formulacion + '|' + referencia].cantidad) }}
+                                            </td>
+                                            <td class="text-end fw-bold">
+                                                {{ "%0.2f"|format(subtotales_referencia[categoria + '|' + formulacion + '|' + referencia].peso) }}
+                                            </td>
+                                        </tr>
                                     {% endfor %}
                                     
                                     <!-- Subtotal de Formulación -->

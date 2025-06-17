@@ -1,5 +1,5 @@
-{% extends 'base.html' %}
-{% block title %}Nuevo Pedido | FlorezCook{% endblock %}
+{% extends 'base_cliente.html' %}
+{% block title %}Nuevo Pedido | FlorezCook Portal de Clientes{% endblock %}
 
 {% block content %}
 <div class="card mb-4">
@@ -228,6 +228,7 @@
                                                 </div>
                                             </div>
                                         </td>
+                                        <!-- ...existing code... resto de campos de la tabla -->
                                         <td style="display: none;"><input type="number" class="form-control" name="gramaje_g_item_{{ loop.index0 }}" value="{{ item.gramaje_g_item }}" readonly></td>
                                         <td style="display: none;"><input type="text" class="form-control" name="grupo_item_{{ loop.index0 }}" value="{{ item.grupo_item }}" readonly></td>
                                         <td style="display: none;"><input type="text" class="form-control" name="linea_item_{{ loop.index0 }}" value="{{ item.linea_item }}" readonly></td>
@@ -409,17 +410,6 @@ $(document).ready(function() {
         $('#numero_identificacion_cliente_ingresado_hidden').val($(this).val());
     });
 
-    // Manejar el envío del formulario de verificación de cliente
-    $('#verificarClienteForm').on('submit', function(e) {
-        e.preventDefault();
-        validarCliente();
-    });
-
-    // Manejar el clic en el botón de limpiar búsqueda
-    $('#limpiarBusqueda').click(function() {
-        $('#numero_identificacion_cliente_ingresado').val('').focus();
-    });
-
     // Ocultar la sección de cliente verificado por defecto
     $('#clienteVerificado').hide();
     
@@ -505,12 +495,6 @@ $(document).ready(function() {
 
     // Al agregar un producto, poner fecha de entrega automática
     $('#addItemBtn').click(function() {
-        // Generar opciones de cantidad del 1 al 100
-        let cantidadOptions = '<option value="">Seleccionar cantidad...</option>';
-        for (let i = 1; i <= 100; i++) {
-            cantidadOptions += `<option value="${i}">${i}</option>`;
-        }
-        
         // Crear fila para tabla (desktop)
         let row = `<tr>
             <td>
@@ -681,149 +665,109 @@ $(document).ready(function() {
         }
     });
 
-    // SOLUCIÓN OPTIMIZADA PARA EL RENDIMIENTO DEL FORMULARIO
-    // Reemplazar la validación lenta con una versión ultra-rápida
-    
-    // 1. DESHABILITAR VALIDACIÓN HTML5 NATIVA
+    // VALIDACIÓN OPTIMIZADA PARA EL PORTAL DE CLIENTES
     $('#pedidoForm').attr('novalidate', 'novalidate');
     
-    // 2. VALIDACIÓN ULTRA-RÁPIDA Y EFICIENTE
     $('#pedidoForm').off('submit').on('submit', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         console.log('🚀 VALIDACIÓN RÁPIDA: Iniciando');
-        const startTime = performance.now();
         
-        // 3. VALIDACIÓN BÁSICA EN UNA SOLA PASADA
+        // Validación básica
         let errores = [];
         
-        // Verificar productos (rápido)
+        // Verificar productos
         const productos = $('.producto-id-hidden[value!=""]').length;
         if (productos === 0) {
             errores.push('Debe agregar al menos un producto');
         }
         
-        // Verificar cantidades (rápido)
+        // Verificar cantidades
         let cantidadError = false;
         $('.cantidad-search').each(function() {
             if (parseFloat($(this).val()) <= 0) {
                 cantidadError = true;
-                return false; // Salir del loop inmediatamente
+                return false;
             }
         });
         if (cantidadError) {
             errores.push('Todas las cantidades deben ser mayores a 0');
         }
         
-        // Verificar campos básicos (rápido)
+        // Verificar campos básicos
         const tipoDespacho = $('[name="despacho_tipo"]').val();
         const direccion = $('[name="direccion_entrega"]').val();
         
         if (!tipoDespacho) errores.push('Seleccione tipo de despacho');
         if (!direccion) errores.push('Ingrese dirección de entrega');
         
-        // 4. MOSTRAR ERRORES SI LOS HAY
+        // Mostrar errores si los hay
         if (errores.length > 0) {
-            const endTime = performance.now();
-            console.log(`⚡ Validación completada en ${endTime - startTime}ms`);
             alert('⚠️ Por favor corrija:\n\n• ' + errores.join('\n• '));
             return false;
         }
         
-        // 5. CONFIRMACIÓN RÁPIDA
+        // Confirmación
         if (!confirm('✅ ¿Enviar este pedido?')) {
             return false;
         }
         
-        // 6. ENVÍO OPTIMIZADO
+        // Envío optimizado
         const $submitBtn = $(this).find('button[type="submit"]');
-        $submitBtn.prop('disabled', true).text('Enviando...');
+        $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Enviando...');
         
-        // 7. ENVÍO DIRECTO SIN AJAX (más rápido)
         try {
-            // Remover atributos required problemáticos antes del envío
             $('.cantidad-search').removeAttr('required');
-            
-            // Envío nativo del formulario (más eficiente)
             this.submit();
         } catch (error) {
             console.error('Error en envío:', error);
             alert('❌ Error al enviar. Intente nuevamente.');
-            $submitBtn.prop('disabled', false).text('Enviar Pedido');
+            $submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i>Enviar Pedido');
         }
-        
-        const endTime = performance.now();
-        console.log(`🎯 Proceso completo en ${endTime - startTime}ms`);
         
         return false;
     });
     
-    // 8. ELIMINAR TODOS LOS EVENT LISTENERS INNECESARIOS QUE CAUSAN LENTITUD
-    $(document).off('input focus', '.cantidad-search');
-    $(document).off('input change', '.cantidad-search');
-    $(document).off('change', 'select[name^="cantidad_"]');
-    $(document).off('keydown', '.cantidad-search');
-    
-    // 9. VALIDACIÓN VISUAL SIMPLE Y RÁPIDA
+    // Validación visual simple
     $(document).on('input', '.cantidad-search', function() {
         const valor = parseFloat($(this).val()) || 0;
         $(this).css('border-color', valor > 0 ? '#28a745' : '#dc3545');
     });
-    
-    // 10. ELIMINAR AUTOCOMPLETADO DE CANTIDADES (causa de lentitud)
-    $('.cantidad-suggestions').remove();
-    
-    console.log('⚡ OPTIMIZACIÓN APLICADA: Validación ultra-rápida activada');
-    
-    // RESTAURAR FUNCIONALIDADES DE BÚSQUEDA OPTIMIZADAS
-    // Restaurar búsqueda de productos y cantidades sin causar lentitud
-    
-    console.log('🔄 RESTAURANDO: Funcionalidades de búsqueda optimizadas');
 
-    // ============================================================================
     // FUNCIONALIDAD DE AUTOCOMPLETADO DE PRODUCTOS (OPTIMIZADA)
-    // ============================================================================
-    
     let timeoutId;
     let currentRequest;
     
-    // Función para buscar productos con autocompletado (optimizada)
+    // Función para buscar productos con autocompletado
     function buscarProductos(termino, inputElement, suggestionsContainer) {
-        // Limpiar timeout anterior
         if (timeoutId) {
             clearTimeout(timeoutId);
         }
         
-        // Cancelar petición anterior si existe
         if (currentRequest) {
             currentRequest.abort();
         }
         
-        // Si el término es muy corto, ocultar sugerencias
         if (termino.length < 2) {
-            suggestionsContainer.hide();
+            suggestionsContainer.removeClass('show');
             return;
         }
         
-        // Debounce optimizado: esperar 400ms para evitar muchas peticiones
         timeoutId = setTimeout(function() {
-            // Mostrar indicador de carga simple
-            suggestionsContainer.html('<div class="dropdown-item text-center">🔍 Buscando...</div>').show();
+            suggestionsContainer.html('<div class="dropdown-item text-center">🔍 Buscando...</div>').addClass('show');
             
-            // Hacer petición AJAX optimizada
             currentRequest = $.ajax({
                 url: '/productos/api/buscar',
                 method: 'GET',
-                data: { q: termino, limit: 8 }, // Reducir límite para mejor rendimiento
-                timeout: 5000, // Timeout de 5 segundos
+                data: { q: termino, limit: 8 },
+                timeout: 5000,
                 success: function(data) {
-                    suggestionsContainer.empty();
+                    suggestionsContainer.empty().removeClass('show');
                     
                     if (data.length === 0) {
-                        suggestionsContainer.html('<div class="dropdown-item text-muted">No se encontraron productos</div>').show();
+                        suggestionsContainer.html('<div class="dropdown-item text-muted">No se encontraron productos</div>').addClass('show');
                     } else {
-                        // Crear elementos de sugerencias optimizados
                         data.forEach(function(producto) {
                             const item = $(`
                                 <div class="dropdown-item producto-suggestion" 
@@ -841,7 +785,6 @@ $(document).ready(function() {
                                 </div>
                             `);
                             
-                            // Agregar evento click optimizado
                             item.on('click', function() {
                                 seleccionarProducto($(this), inputElement);
                             });
@@ -849,12 +792,12 @@ $(document).ready(function() {
                             suggestionsContainer.append(item);
                         });
                         
-                        suggestionsContainer.show();
+                        suggestionsContainer.addClass('show');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.statusText !== 'abort') {
-                        suggestionsContainer.html('<div class="dropdown-item text-danger">Error al buscar</div>').show();
+                        suggestionsContainer.html('<div class="dropdown-item text-danger">Error al buscar</div>').addClass('show');
                     }
                 },
                 complete: function() {
@@ -864,7 +807,7 @@ $(document).ready(function() {
         }, 400);
     }
     
-    // Función para seleccionar un producto (optimizada)
+    // Función para seleccionar un producto
     function seleccionarProducto(suggestionElement, inputElement) {
         const productId = suggestionElement.data('id');
         const codigo = suggestionElement.data('codigo');
@@ -873,29 +816,24 @@ $(document).ready(function() {
         const grupo = suggestionElement.data('grupo');
         const linea = suggestionElement.data('linea');
         
-        // Obtener el índice del campo
         const index = inputElement.data('index');
         
-        // Establecer valores en los campos de forma rápida
         inputElement.val(`${codigo} - ${referencia} - ${linea || 'Sin línea'}`);
         inputElement.siblings('.producto-id-hidden').val(productId);
         
-        // Completar campos ocultos
         $(`input[name='gramaje_g_item_${index}']`).val(gramaje);
         $(`input[name='grupo_item_${index}']`).val(grupo);
         $(`input[name='linea_item_${index}']`).val(linea);
         
-        // Ocultar sugerencias
-        suggestionElement.closest('.producto-suggestions').hide();
+        suggestionElement.closest('.producto-suggestions').removeClass('show');
         
-        // Enfocar el campo de cantidad
         const cantidadField = $(`input[name='cantidad_${index}']`);
         if (cantidadField.length) {
             cantidadField.focus();
         }
     }
     
-    // Event listeners para búsqueda de productos (optimizados)
+    // Event listeners para búsqueda de productos
     $(document).on('input', '.producto-search', function() {
         const inputElement = $(this);
         const termino = inputElement.val().trim();
@@ -904,48 +842,37 @@ $(document).ready(function() {
         if (termino.length >= 2) {
             buscarProductos(termino, inputElement, suggestionsContainer);
         } else {
-            suggestionsContainer.hide();
+            suggestionsContainer.removeClass('show');
         }
     });
-    
-    // ============================================================================
-    // FUNCIONALIDAD DE AUTOCOMPLETADO DE CANTIDADES (OPTIMIZADA)
-    // ============================================================================
-    
-    let cantidadTimeoutId;
-    
-    // Cantidades comunes optimizadas
+
+    // FUNCIONALIDAD DE AUTOCOMPLETADO DE CANTIDADES
     const cantidadesComunes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 24, 25, 30, 36, 40, 48, 50, 60, 72, 100];
     
-    // Función para generar sugerencias de cantidad (optimizada)
     function generarSugerenciasCantidad(termino) {
         if (!termino || termino.length === 0) {
-            return cantidadesComunes.slice(0, 6); // Solo 6 sugerencias
+            return cantidadesComunes.slice(0, 6);
         }
         
         const terminoNum = parseInt(termino);
         let sugerencias = [];
         
-        // Coincidencias exactas rápidas
         cantidadesComunes.forEach(cantidad => {
             if (cantidad.toString().startsWith(termino) && sugerencias.length < 6) {
                 sugerencias.push(cantidad);
             }
         });
         
-        // Si escribió un número válido, agregarlo
         if (!isNaN(terminoNum) && terminoNum > 0 && !sugerencias.includes(terminoNum)) {
             sugerencias.unshift(terminoNum);
         }
         
-        return sugerencias.slice(0, 6); // Máximo 6 sugerencias
+        return sugerencias.slice(0, 6);
     }
     
-    // Función para mostrar sugerencias de cantidad (optimizada)
     function mostrarSugerenciasCantidad(inputElement, sugerencias) {
         const suggestionsContainer = inputElement.siblings('.cantidad-suggestions');
         
-        // Si no existe el contenedor, crearlo
         if (suggestionsContainer.length === 0) {
             inputElement.parent().append('<div class="dropdown-menu cantidad-suggestions" style="display: none;"></div>');
         }
@@ -954,7 +881,7 @@ $(document).ready(function() {
         container.empty();
         
         if (sugerencias.length === 0) {
-            container.hide();
+            container.removeClass('show');
             return;
         }
         
@@ -967,7 +894,6 @@ $(document).ready(function() {
                 </div>
             `);
             
-            // Agregar evento click
             item.on('click', function() {
                 seleccionarCantidad($(this), inputElement);
             });
@@ -975,59 +901,43 @@ $(document).ready(function() {
             container.append(item);
         });
         
-        container.show();
+        container.addClass('show');
     }
     
-    // Función para seleccionar una cantidad (optimizada)
     function seleccionarCantidad(suggestionElement, inputElement) {
         const cantidad = suggestionElement.data('cantidad');
         const index = inputElement.data('index');
         
-        // Establecer valor en el campo
         inputElement.val(cantidad);
         
-        // Calcular peso total si hay gramaje
         const gramaje = parseFloat($(`input[name='gramaje_g_item_${index}']`).val()) || 0;
         if (gramaje > 0) {
             $(`input[name='peso_total_g_item_${index}']`).val(cantidad * gramaje);
         }
         
-        // Ocultar sugerencias
-        suggestionElement.closest('.cantidad-suggestions').hide();
-        
-        // Actualizar color del borde
+        suggestionElement.closest('.cantidad-suggestions').removeClass('show');
         inputElement.css('border-color', '#28a745');
     }
-    
-    // Event listeners para cantidades (optimizados)
+
+    // Event listeners para cantidades
     $(document).on('focus', '.cantidad-search', function() {
         const inputElement = $(this);
         const termino = inputElement.val().trim();
         
-        // Limpiar timeout anterior
-        if (cantidadTimeoutId) {
-            clearTimeout(cantidadTimeoutId);
-        }
-        
-        // Mostrar sugerencias después de 300ms
-        cantidadTimeoutId = setTimeout(function() {
+        setTimeout(function() {
             const sugerencias = generarSugerenciasCantidad(termino);
             mostrarSugerenciasCantidad(inputElement, sugerencias);
         }, 300);
     });
     
-    // ============================================================================
-    // EVENTOS OPTIMIZADOS
-    // ============================================================================
-    
-    // Ocultar sugerencias cuando se hace clic fuera (optimizado)
+    // Ocultar sugerencias cuando se hace clic fuera
     $(document).on('click', function(e) {
         if (!$(e.target).closest('.producto-search-container, .cantidad-search-container').length) {
-            $('.producto-suggestions, .cantidad-suggestions').hide();
+            $('.producto-suggestions, .cantidad-suggestions').removeClass('show');
         }
     });
     
-    // Navegación con teclado para productos (optimizada)
+    // Navegación con teclado para productos
     $(document).on('keydown', '.producto-search', function(e) {
         const suggestionsContainer = $(this).siblings('.producto-suggestions');
         const suggestions = suggestionsContainer.find('.producto-suggestion');
@@ -1054,7 +964,7 @@ $(document).ready(function() {
                 seleccionarProducto(active, $(this));
             }
         } else if (e.key === 'Escape') {
-            suggestionsContainer.hide();
+            suggestionsContainer.removeClass('show');
         }
     });
     
@@ -1064,7 +974,6 @@ $(document).ready(function() {
         const index = inputElement.data('index');
         
         if (inputElement.val().trim() === '') {
-            // Limpiar campos relacionados
             inputElement.siblings('.producto-id-hidden').val('');
             $(`input[name='gramaje_g_item_${index}']`).val('');
             $(`input[name='grupo_item_${index}']`).val('');
@@ -1085,13 +994,90 @@ $(document).ready(function() {
         }
     });
     
-    console.log('✅ RESTAURADO: Búsquedas de productos y cantidades funcionando de forma optimizada');
+    console.log('✅ Portal de Clientes: Funcionalidades optimizadas cargadas');
 });
 </script>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Estilos base para mobile cards (oculto en desktop) */
+    .mobile-product-cards {
+        display: none;
+    }
+    
+    /* CORRECCIÓN PRINCIPAL: Estilos para dropdowns de sugerencias */
+    .producto-search-container,
+    .cantidad-search-container {
+        position: relative !important;
+        z-index: 10;
+    }
+    
+    .producto-suggestions,
+    .cantidad-suggestions {
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 9999 !important;
+        background: white !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
+        max-height: 250px !important;
+        overflow-y: auto !important;
+        margin-top: 2px !important;
+        display: none;
+    }
+    
+    .producto-suggestions.show,
+    .cantidad-suggestions.show {
+        display: block !important;
+    }
+    
+    .producto-suggestion,
+    .cantidad-suggestion {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #f1f1f1 !important;
+        cursor: pointer !important;
+        transition: background-color 0.2s ease !important;
+        background-color: white !important;
+    }
+    
+    .producto-suggestion:hover,
+    .cantidad-suggestion:hover,
+    .producto-suggestion.active,
+    .cantidad-suggestion.active {
+        background-color: #f8f9fa !important;
+    }
+    
+    .producto-suggestion:last-child,
+    .cantidad-suggestion:last-child {
+        border-bottom: none !important;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .producto-suggestion:first-child,
+    .cantidad-suggestion:first-child {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    /* Asegurar que la tabla permita overflow visible */
+    .table-responsive {
+        overflow: visible !important;
+    }
+    
+    .table-productos {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        position: relative !important;
+    }
+    
+    .table-productos td {
+        position: static !important;
+        overflow: visible !important;
+    }
+    
     /* Estilos específicos para móviles */
     @media (max-width: 768px) {
         /* Encabezado más compacto en móvil */
@@ -1292,6 +1278,8 @@ $(document).ready(function() {
             padding: 15px;
             background: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
         }
         
         .mobile-product-card .form-label {
@@ -1342,23 +1330,27 @@ $(document).ready(function() {
             margin-top: 20px;
         }
         
-        /* Dropdowns de sugerencias optimizados para móvil */
-        .producto-suggestions, .cantidad-suggestions {
+        /* DROPDOWNS OPTIMIZADOS PARA MÓVIL */
+        .mobile-product-card .producto-suggestions,
+        .mobile-product-card .cantidad-suggestions {
             position: fixed !important;
-            top: auto !important;
-            left: 10px !important;
-            right: 10px !important;
-            bottom: 20px !important;
-            max-height: 40vh !important;
-            z-index: 9999 !important;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            top: 50% !important;
+            left: 15px !important;
+            right: 15px !important;
+            bottom: auto !important;
+            transform: translateY(-50%) !important;
+            max-height: 60vh !important;
+            z-index: 99999 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4) !important;
+            backdrop-filter: blur(10px) !important;
         }
         
-        .producto-suggestion, .cantidad-suggestion {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f1f1f1;
-            font-size: 14px;
+        .mobile-product-card .producto-suggestion,
+        .mobile-product-card .cantidad-suggestion {
+            padding: 16px 20px !important;
+            border-bottom: 1px solid #f1f1f1 !important;
+            font-size: 15px !important;
         }
         
         /* Navegación más accesible */
@@ -1432,18 +1424,11 @@ $(document).ready(function() {
         }
     }
     
-    /* Estilos base para mobile cards (oculto en desktop) */
-    .mobile-product-cards {
-        display: none;
-    }
-    
-    /* Clase helper para campos requeridos en móvil */
-    @media (max-width: 768px) {
-        .campo-requerido:after {
-            content: " *";
-            color: #dc3545;
-            font-weight: bold;
-        }
+    /* Clase helper para campos requeridos */
+    .campo-requerido:after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
     }
     
     /* Animaciones suaves para mejorar la UX */
@@ -1461,9 +1446,85 @@ $(document).ready(function() {
         }
         
         /* Evitar zoom automático en iOS */
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        input[type="number"]:focus {
             font-size: 16px;
         }
+    }
+    
+    /* Estilos para los botones de acción */
+    .btn-outline-primary {
+        border-color: #e85a0c;
+        color: #e85a0c;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #e85a0c;
+        border-color: #e85a0c;
+        color: white;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    
+    /* OVERLAY PARA MÓVIL CUANDO HAY DROPDOWN ABIERTO */
+    .dropdown-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 99998;
+        display: none;
+    }
+    
+    .dropdown-overlay.show {
+        display: block;
+    }
+    
+    /* Animaciones para los dropdowns */
+    .producto-suggestions,
+    .cantidad-suggestions {
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+    }
+    
+    .producto-suggestions.show,
+    .cantidad-suggestions.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Scrollbar personalizado para los dropdowns */
+    .producto-suggestions::-webkit-scrollbar,
+    .cantidad-suggestions::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .producto-suggestions::-webkit-scrollbar-track,
+    .cantidad-suggestions::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .producto-suggestions::-webkit-scrollbar-thumb,
+    .cantidad-suggestions::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+    
+    .producto-suggestions::-webkit-scrollbar-thumb:hover,
+    .cantidad-suggestions::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
     }
 </style>
 {% endblock %}

@@ -44,11 +44,12 @@ def api_buscar():
         if len(termino) < 1:  # Mínimo 1 carácter para iniciar búsqueda
             return jsonify([])
         
-        # Buscar productos por código o referencia
+        # Buscar productos por código, referencia o línea
         query = db.query(Producto).filter(
             or_(
                 Producto.codigo.ilike(f'%{termino}%'),
-                Producto.referencia_de_producto.ilike(f'%{termino}%')
+                Producto.referencia_de_producto.ilike(f'%{termino}%'),
+                Producto.categoria_linea.ilike(f'%{termino}%')
             )
         ).limit(limite)
         
@@ -61,7 +62,7 @@ def api_buscar():
                 'id': p.id,
                 'codigo': p.codigo,
                 'referencia': p.referencia_de_producto,
-                'display': f"{p.codigo} - {p.referencia_de_producto}",
+                'display': f"{p.codigo} - {p.referencia_de_producto} - {p.categoria_linea or 'Sin línea'}",
                 'gramaje_g': p.gramaje_g,
                 'formulacion_grupo': p.formulacion_grupo or '',
                 'categoria_linea': p.categoria_linea or ''

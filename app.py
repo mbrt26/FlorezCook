@@ -211,8 +211,10 @@ def create_app():
     
     return app
 
+# Crear la instancia de la aplicación a nivel de módulo
+app = create_app()
+
 # Para desarrollo local
 if __name__ == '__main__':
-    app = create_app()
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)

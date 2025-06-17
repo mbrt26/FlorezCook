@@ -112,7 +112,7 @@ def reporte_pedidos():
 @reportes_bp.route('/consolidado')
 @reportes_bp.route('/consolidado-productos')  # Agregar ruta alternativa con guiones
 def consolidado_productos():
-    """Consolidado de productos pedidos agrupados por categoría con subtotales por formulación"""
+    """Consolidado de productos pedidos agrupados por categoría con subtotales por formulación y referencia"""
     db = db_config.get_session()
     try:
         # Parámetros de filtro
@@ -164,8 +164,9 @@ def consolidado_productos():
         # Obtener resultados
         resultados = query.all()
 
-        # Agrupar primero por categoría, luego por formulación
+        # Agrupar por categoría, luego por formulación, luego por referencia de producto
         resultados_agrupados = {}
+        subtotales_referencia = {}
         subtotales_formulacion = {}
         totales_categoria = {}
         total_cantidad = 0
@@ -174,6 +175,7 @@ def consolidado_productos():
         for resultado in resultados:
             categoria_key = resultado.categoria_linea or 'Sin Categoría'
             formulacion_key = resultado.formulacion_grupo or 'Sin Formulación'
+            referencia_key = resultado.referencia_de_producto or 'Sin Referencia'
             
             # Inicializar estructura de categoría si no existe
             if categoria_key not in resultados_agrupados:
@@ -182,8 +184,13 @@ def consolidado_productos():
             
             # Inicializar estructura de formulación dentro de la categoría
             if formulacion_key not in resultados_agrupados[categoria_key]:
-                resultados_agrupados[categoria_key][formulacion_key] = []
+                resultados_agrupados[categoria_key][formulacion_key] = {}
                 subtotales_formulacion[f"{categoria_key}|{formulacion_key}"] = {'cantidad': 0, 'peso': 0}
+
+            # Inicializar estructura de referencia dentro de la formulación
+            if referencia_key not in resultados_agrupados[categoria_key][formulacion_key]:
+                resultados_agrupados[categoria_key][formulacion_key][referencia_key] = []
+                subtotales_referencia[f"{categoria_key}|{formulacion_key}|{referencia_key}"] = {'cantidad': 0, 'peso': 0}
 
             # Crear objeto de item
             item = {
@@ -196,12 +203,17 @@ def consolidado_productos():
                 'total_peso': resultado.peso_total_g_item or 0
             }
 
-            resultados_agrupados[categoria_key][formulacion_key].append(item)
+            resultados_agrupados[categoria_key][formulacion_key][referencia_key].append(item)
+            
+            # Actualizar subtotales de referencia
+            subtotal_ref_key = f"{categoria_key}|{formulacion_key}|{referencia_key}"
+            subtotales_referencia[subtotal_ref_key]['cantidad'] += item['total_cantidad']
+            subtotales_referencia[subtotal_ref_key]['peso'] += item['total_peso']
             
             # Actualizar subtotales de formulación
-            subtotal_key = f"{categoria_key}|{formulacion_key}"
-            subtotales_formulacion[subtotal_key]['cantidad'] += item['total_cantidad']
-            subtotales_formulacion[subtotal_key]['peso'] += item['total_peso']
+            subtotal_form_key = f"{categoria_key}|{formulacion_key}"
+            subtotales_formulacion[subtotal_form_key]['cantidad'] += item['total_cantidad']
+            subtotales_formulacion[subtotal_form_key]['peso'] += item['total_peso']
             
             # Actualizar totales de categoría
             totales_categoria[categoria_key]['cantidad'] += item['total_cantidad']
@@ -240,6 +252,7 @@ def consolidado_productos():
 
         return render_template('consolidado_productos.html',
                              resultados_agrupados=resultados_agrupados,
+                             subtotales_referencia=subtotales_referencia,
                              subtotales_formulacion=subtotales_formulacion,
                              totales_categoria=totales_categoria,
                              total_cantidad=total_cantidad,
@@ -506,8 +519,9 @@ def exportar_consolidado_excel():
 
         resultados = query.all()
 
-        # Agrupar primero por categoría, luego por formulación (misma lógica que en consolidado_productos)
+        # Agrupar primero por categoría, luego por formulación, luego por referencia de producto (misma lógica que en consolidado_productos)
         resultados_agrupados = {}
+        subtotales_referencia = {}
         subtotales_formulacion = {}
         totales_categoria = {}
         total_cantidad = 0
@@ -516,6 +530,7 @@ def exportar_consolidado_excel():
         for resultado in resultados:
             categoria_key = resultado.categoria_linea or 'Sin Categoría'
             formulacion_key = resultado.formulacion_grupo or 'Sin Formulación'
+            referencia_key = resultado.referencia_de_producto or 'Sin Referencia'
             
             # Inicializar estructura de categoría si no existe
             if categoria_key not in resultados_agrupados:
@@ -524,8 +539,13 @@ def exportar_consolidado_excel():
             
             # Inicializar estructura de formulación dentro de la categoría
             if formulacion_key not in resultados_agrupados[categoria_key]:
-                resultados_agrupados[categoria_key][formulacion_key] = []
+                resultados_agrupados[categoria_key][formulacion_key] = {}
                 subtotales_formulacion[f"{categoria_key}|{formulacion_key}"] = {'cantidad': 0, 'peso': 0}
+
+            # Inicializar estructura de referencia dentro de la formulación
+            if referencia_key not in resultados_agrupados[categoria_key][formulacion_key]:
+                resultados_agrupados[categoria_key][formulacion_key][referencia_key] = []
+                subtotales_referencia[f"{categoria_key}|{formulacion_key}|{referencia_key}"] = {'cantidad': 0, 'peso': 0}
 
             # Crear objeto de item
             item = {
@@ -538,12 +558,17 @@ def exportar_consolidado_excel():
                 'total_peso': resultado.peso_total_g_item or 0
             }
 
-            resultados_agrupados[categoria_key][formulacion_key].append(item)
+            resultados_agrupados[categoria_key][formulacion_key][referencia_key].append(item)
+            
+            # Actualizar subtotales de referencia
+            subtotal_ref_key = f"{categoria_key}|{formulacion_key}|{referencia_key}"
+            subtotales_referencia[subtotal_ref_key]['cantidad'] += item['total_cantidad']
+            subtotales_referencia[subtotal_ref_key]['peso'] += item['total_peso']
             
             # Actualizar subtotales de formulación
-            subtotal_key = f"{categoria_key}|{formulacion_key}"
-            subtotales_formulacion[subtotal_key]['cantidad'] += item['total_cantidad']
-            subtotales_formulacion[subtotal_key]['peso'] += item['total_peso']
+            subtotal_form_key = f"{categoria_key}|{formulacion_key}"
+            subtotales_formulacion[subtotal_form_key]['cantidad'] += item['total_cantidad']
+            subtotales_formulacion[subtotal_form_key]['peso'] += item['total_peso']
             
             # Actualizar totales de categoría
             totales_categoria[categoria_key]['cantidad'] += item['total_cantidad']
@@ -598,7 +623,7 @@ def exportar_consolidado_excel():
                 ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
                 row += 1
                 
-                for formulacion_key, items in formulaciones.items():
+                for formulacion_key, referencias in formulaciones.items():
                     # Encabezado de Formulación
                     cell = ws.cell(row=row, column=1, value=f"    🧪 {formulacion_key}")
                     cell.font = formulacion_font
@@ -606,18 +631,56 @@ def exportar_consolidado_excel():
                     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
                     row += 1
                     
-                    # Items de la formulación
-                    for item in items:
-                        ws.cell(row=row, column=1, value=item['formulacion'] or '-')
-                        ws.cell(row=row, column=2, value=item['referencia'] or '-')
-                        ws.cell(row=row, column=3, value=item['comentarios'] or '-')
-                        ws.cell(row=row, column=4, value=item['pedido_id'])
+                    for referencia_key, items in referencias.items():
+                        # Encabezado de Referencia de Producto
+                        referencia_font = Font(bold=True, color="000000")
+                        referencia_fill = PatternFill(start_color="E8F5E8", end_color="E8F5E8", fill_type="solid")  # Verde claro
                         
-                        # Cantidad y peso con formato numérico y alineación derecha
-                        cantidad_cell = ws.cell(row=row, column=5, value=round(item['total_cantidad'], 2))
-                        cantidad_cell.alignment = right_alignment
-                        peso_cell = ws.cell(row=row, column=6, value=round(item['total_peso'], 2))
-                        peso_cell.alignment = right_alignment
+                        cell = ws.cell(row=row, column=1, value=f"      📦 {referencia_key}")
+                        cell.font = referencia_font
+                        cell.fill = referencia_fill
+                        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+                        row += 1
+                        
+                        # Items de la referencia
+                        for item in items:
+                            ws.cell(row=row, column=1, value=item['formulacion'] or '-')
+                            ws.cell(row=row, column=2, value=item['referencia'] or '-')
+                            ws.cell(row=row, column=3, value=item['comentarios'] or '-')
+                            ws.cell(row=row, column=4, value=item['pedido_id'])
+                            
+                            # Cantidad y peso con formato numérico y alineación derecha
+                            cantidad_cell = ws.cell(row=row, column=5, value=round(item['total_cantidad'], 2))
+                            cantidad_cell.alignment = right_alignment
+                            peso_cell = ws.cell(row=row, column=6, value=round(item['total_peso'], 2))
+                            peso_cell.alignment = right_alignment
+                            
+                            row += 1
+                        
+                        # Subtotal de Referencia
+                        subtotal_ref_font = Font(bold=True, color="000000")
+                        subtotal_ref_fill = PatternFill(start_color="D4F1D4", end_color="D4F1D4", fill_type="solid")  # Verde
+                        
+                        subtotal_ref_cell = ws.cell(row=row, column=4, value=f"📦 Subtotal {referencia_key}:")
+                        subtotal_ref_cell.font = subtotal_ref_font
+                        subtotal_ref_cell.fill = subtotal_ref_fill
+                        subtotal_ref_cell.alignment = right_alignment
+                        
+                        # Merge las primeras 4 columnas para el texto del subtotal de referencia
+                        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+                        
+                        # Subtotal referencia cantidad
+                        subtotal_ref_key = f"{categoria_key}|{formulacion_key}|{referencia_key}"
+                        subtotal_ref_cantidad_cell = ws.cell(row=row, column=5, value=round(subtotales_referencia[subtotal_ref_key]['cantidad'], 2))
+                        subtotal_ref_cantidad_cell.font = subtotal_ref_font
+                        subtotal_ref_cantidad_cell.fill = subtotal_ref_fill
+                        subtotal_ref_cantidad_cell.alignment = right_alignment
+                        
+                        # Subtotal referencia peso
+                        subtotal_ref_peso_cell = ws.cell(row=row, column=6, value=round(subtotales_referencia[subtotal_ref_key]['peso'], 2))
+                        subtotal_ref_peso_cell.font = subtotal_ref_font
+                        subtotal_ref_peso_cell.fill = subtotal_ref_fill
+                        subtotal_ref_peso_cell.alignment = right_alignment
                         
                         row += 1
                     

@@ -1,0 +1,37 @@
+dispatch:
+# Portal de Clientes - Subdominio dedicado
+- url: "cliente.florezcook.appspot.com/*"
+  service: florezcook
+  
+- url: "portal.florezcook.appspot.com/*"
+  service: florezcook
+
+- url: "client.florezcook.appspot.com/*"
+  service: florezcook
+
+# Rutas del portal de clientes en el dominio principal
+- url: "florezcook.appspot.com/cliente*"
+  service: florezcook
+  
+- url: "florezcook.appspot.com/portal-cliente*"
+  service: florezcook
+
+# Aplicación completa - Dominio principal
+- url: "florezcook.appspot.com/*"
+  service: florezcook
+
+- url: "admin.florezcook.appspot.com/*"
+  service: florezcook
+
+# Dominios personalizados (si los tienes)
+- url: "cliente.florezcook.com/*"
+  service: florezcook
+  
+- url: "portal.florezcook.com/*"
+  service: florezcook
+  
+- url: "florezcook.com/*"
+  service: florezcook
+
+- url: "www.florezcook.com/*"
+  service: florezcook

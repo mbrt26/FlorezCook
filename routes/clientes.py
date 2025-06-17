@@ -259,55 +259,127 @@ def importar():
                     # Leer el archivo Excel
                     df = pd.read_excel(archivo)
                     
-                    # Validar columnas requeridas
-                    columnas_requeridas = ['nombre_comercial', 'tipo_identificacion', 'numero_identificacion']
-                    for col in columnas_requeridas:
-                        if col not in df.columns:
-                            raise ValueError(f'Falta la columna requerida: {col}')
+                    # Limpiar nombres de columnas (remover espacios extra y caracteres especiales)
+                    df.columns = df.columns.str.strip().str.lower()
+                    
+                    # Mapeo de columnas permitidas (sin el asterisco para requeridas)
+                    column_mapping = {
+                        'nombre comercial': 'nombre_comercial',
+                        'nombre comercial *': 'nombre_comercial',
+                        'razón social': 'razon_social',
+                        'razon social': 'razon_social',
+                        'tipo identificación': 'tipo_identificacion',
+                        'tipo identificacion': 'tipo_identificacion',
+                        'número identificación': 'numero_identificacion',
+                        'numero identificacion': 'numero_identificacion',
+                        'email': 'email',
+                        'teléfono': 'telefono',
+                        'telefono': 'telefono',
+                        'dirección': 'direccion',
+                        'direccion': 'direccion',
+                        'ciudad': 'ciudad',
+                        'departamento': 'departamento'
+                    }
+                    
+                    # Renombrar columnas según el mapeo
+                    df = df.rename(columns=column_mapping)
+                    
+                    # Validar que al menos existe la columna requerida
+                    if 'nombre_comercial' not in df.columns:
+                        raise ValueError('La columna "Nombre Comercial" es obligatoria')
                     
                     # Procesar cada fila
-                    resultados = {'exito': True, 'mensaje': 'Clientes importados correctamente', 'errores': []}
-                    for _, fila in df.iterrows():
+                    resultados = {
+                        'exito': True, 
+                        'mensaje': 'Clientes importados correctamente', 
+                        'errores': [],
+                        'procesados': 0,
+                        'exitosos': 0
+                    }
+                    
+                    for index, fila in df.iterrows():
+                        resultados['procesados'] += 1
+                        fila_num = index + 2  # +2 porque pandas es 0-indexed y contamos el header
+                        
                         try:
-                            numero_identificacion = str(fila.get('numero_identificacion', ''))
-                            
-                            # Verificar si ya existe un cliente con este número de identificación
-                            cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero_identificacion).first()
-                            if cliente_existente:
-                                resultados['errores'].append(f'Fila {_ + 2}: Ya existe un cliente con el número de identificación {numero_identificacion}')
+                            # Validar nombre comercial (campo obligatorio)
+                            nombre_comercial = str(fila.get('nombre_comercial', '')).strip()
+                            if not nombre_comercial or nombre_comercial.lower() in ['nan', 'none', '']:
+                                resultados['errores'].append(f'Fila {fila_num}: El nombre comercial es obligatorio')
                                 continue
                             
+                            # Obtener y limpiar otros campos
+                            numero_identificacion = str(fila.get('numero_identificacion', '')).strip()
+                            if numero_identificacion.lower() in ['nan', 'none']:
+                                numero_identificacion = ''
+                            
+                            # Si hay número de identificación, verificar duplicados
+                            if numero_identificacion:
+                                cliente_existente = db.query(Cliente).filter(
+                                    Cliente.numero_identificacion == numero_identificacion
+                                ).first()
+                                if cliente_existente:
+                                    resultados['errores'].append(
+                                        f'Fila {fila_num}: Ya existe un cliente con el número de identificación {numero_identificacion}'
+                                    )
+                                    continue
+                            
+                            # Limpiar y preparar datos
+                            def clean_field(value):
+                                if pd.isna(value) or str(value).lower() in ['nan', 'none', '']:
+                                    return ''
+                                return str(value).strip()
+                            
+                            # Validar email si se proporciona
+                            email = clean_field(fila.get('email', ''))
+                            if email and '@' not in email:
+                                resultados['errores'].append(f'Fila {fila_num}: Email inválido: {email}')
+                                continue
+                            
+                            # Validar departamento si se proporciona
+                            departamento = clean_field(fila.get('departamento', ''))
+                            if departamento and departamento not in DEPARTAMENTOS_CIUDADES:
+                                resultados['errores'].append(
+                                    f'Fila {fila_num}: Departamento "{departamento}" no válido. '
+                                    f'Use uno de: {", ".join(list(DEPARTAMENTOS_CIUDADES.keys())[:5])}...'
+                                )
+                                continue
+                            
+                            # Crear cliente
                             cliente = Cliente(
-                                nombre_comercial=fila.get('nombre_comercial', ''),
-                                razon_social=fila.get('razon_social', fila.get('nombre_comercial', '')),
-                                tipo_identificacion=fila.get('tipo_identificacion', ''),
+                                nombre_comercial=nombre_comercial,
+                                razon_social=clean_field(fila.get('razon_social', '')) or nombre_comercial,
+                                tipo_identificacion=clean_field(fila.get('tipo_identificacion', '')),
                                 numero_identificacion=numero_identificacion,
-                                digito_verificacion=str(fila.get('digito_verificacion', '')) if pd.notna(fila.get('digito_verificacion')) else None,
-                                direccion=fila.get('direccion', ''),
-                                direccion_ciudad=fila.get('ciudad', ''),
-                                direccion_departamento=fila.get('departamento', ''),
-                                direccion_pais=fila.get('pais', 'Colombia'),
-                                telefono=str(fila.get('telefono', '')),
-                                email=fila.get('email', ''),
-                                responsable=fila.get('responsable', ''),
-                                cargo=fila.get('cargo', ''),
-                                actividad_economica=fila.get('actividad_economica', '')
+                                email=email,
+                                telefono=clean_field(fila.get('telefono', '')),
+                                direccion=clean_field(fila.get('direccion', '')),
+                                ciudad=clean_field(fila.get('ciudad', '')),
+                                departamento=departamento
                             )
+                            
                             db.add(cliente)
                             db.commit()
+                            resultados['exitosos'] += 1
+                            
                         except IntegrityError as e:
                             db.rollback()
                             if 'numero_identificacion' in str(e) or 'UNIQUE constraint failed' in str(e):
-                                resultados['errores'].append(f'Fila {_ + 2}: El número de identificación {numero_identificacion} ya está registrado')
+                                resultados['errores'].append(
+                                    f'Fila {fila_num}: El número de identificación {numero_identificacion} ya está registrado'
+                                )
                             else:
-                                resultados['errores'].append(f'Fila {_ + 2}: Error de base de datos - {str(e)}')
+                                resultados['errores'].append(f'Fila {fila_num}: Error de base de datos - {str(e)}')
                         except Exception as e:
                             db.rollback()
-                            resultados['errores'].append(f'Fila {_ + 2}: {str(e)}')
+                            resultados['errores'].append(f'Fila {fila_num}: {str(e)}')
                     
+                    # Actualizar mensaje de resultado
                     if resultados['errores']:
                         resultados['exito'] = False
-                        resultados['mensaje'] = 'Se produjeron algunos errores durante la importación'
+                        resultados['mensaje'] = f'Importación completada con errores. Procesados: {resultados["procesados"]}, Exitosos: {resultados["exitosos"]}, Errores: {len(resultados["errores"])}'
+                    else:
+                        resultados['mensaje'] = f'¡Importación exitosa! Se importaron {resultados["exitosos"]} clientes correctamente.'
                     
                     return render_template('importar_clientes.html', 
                                          resultados=resultados,
@@ -332,32 +404,152 @@ def redirect_importar():
 def descargar_plantilla():
     """Descargar plantilla Excel para importar clientes"""
     try:
-        # Crear un DataFrame con las columnas y un ejemplo
-        datos_ejemplo = {
-            'nombre_comercial': ['Ejemplo S.A.S.'],
-            'razon_social': ['Ejemplo S.A.S.'],
-            'tipo_identificacion': ['NIT'],
-            'numero_identificacion': ['900123456'],
-            'email': ['ejemplo@empresa.com'],
-            'telefono': ['6011234567'],
-            'direccion': ['Carrera 1 # 2-3'],
-            'ciudad': ['Bogotá'],
-            'departamento': ['Bogotá D.C.']
-        }
+        from openpyxl import Workbook
+        from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+        from openpyxl.worksheet.datavalidation import DataValidation
         
-        df = pd.DataFrame(datos_ejemplo)
+        # Crear un nuevo workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Clientes"
         
-        # Crear un buffer en memoria
+        # Definir estilos
+        header_fill = PatternFill(start_color="E85A0C", end_color="E85A0C", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=12)
+        required_fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
+        optional_fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
+        center_alignment = Alignment(horizontal="center", vertical="center")
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Encabezados de columna
+        headers = [
+            ('nombre_comercial', 'Nombre Comercial *', True),
+            ('razon_social', 'Razón Social', False),
+            ('tipo_identificacion', 'Tipo Identificación', False),
+            ('numero_identificacion', 'Número Identificación', False),
+            ('email', 'Email', False),
+            ('telefono', 'Teléfono', False),
+            ('direccion', 'Dirección', False),
+            ('ciudad', 'Ciudad', False),
+            ('departamento', 'Departamento', False)
+        ]
+        
+        # Escribir encabezados
+        for col, (field, header, required) in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = center_alignment
+            cell.border = border
+            
+            # Ajustar ancho de columna
+            column_letter = cell.column_letter
+            ws.column_dimensions[column_letter].width = 20
+        
+        # Fila de ejemplo con datos reales
+        ejemplo_data = [
+            'Ejemplo Empresa S.A.S.',
+            'Ejemplo Empresa S.A.S.',
+            'NIT',
+            '900123456-7',
+            'contacto@ejemplo.com',
+            '601 234 5678',
+            'Carrera 15 # 93-47 Oficina 501',
+            'Bogotá',
+            'Cundinamarca'
+        ]
+        
+        for col, value in enumerate(ejemplo_data, 1):
+            cell = ws.cell(row=2, column=col, value=value)
+            cell.border = border
+            # Colorear celdas según si son requeridas u opcionales
+            if headers[col-1][2]:  # Required field
+                cell.fill = required_fill
+            else:  # Optional field
+                cell.fill = optional_fill
+        
+        # Agregar validación de datos para tipo_identificacion
+        tipos_id = ['NIT', 'CC', 'CE', 'TI', 'RC', 'PA']
+        dv_tipo_id = DataValidation(type="list", formula1='"{}"'.format(','.join(tipos_id)))
+        dv_tipo_id.error = 'Tipo de identificación inválido'
+        dv_tipo_id.errorTitle = 'Error de validación'
+        ws.add_data_validation(dv_tipo_id)
+        dv_tipo_id.add('C3:C1000')  # Aplicar a columna tipo_identificacion
+        
+        # Agregar validación para departamentos
+        departamentos = list(DEPARTAMENTOS_CIUDADES.keys())
+        dv_depto = DataValidation(type="list", formula1='"{}"'.format(','.join(departamentos)))
+        dv_depto.error = 'Departamento inválido'
+        dv_depto.errorTitle = 'Error de validación'
+        ws.add_data_validation(dv_depto)
+        dv_depto.add('I3:I1000')  # Aplicar a columna departamento
+        
+        # Crear hoja de instrucciones
+        ws_inst = wb.create_sheet("Instrucciones")
+        
+        # Instrucciones detalladas
+        instrucciones = [
+            ["FlorezCook - Plantilla de Importación de Clientes", ""],
+            ["", ""],
+            ["INSTRUCCIONES DE USO:", ""],
+            ["", ""],
+            ["1. Campos Obligatorios (fondo rojo):", ""],
+            ["   • nombre_comercial: Nombre comercial de la empresa", ""],
+            ["", ""],
+            ["2. Campos Opcionales (fondo azul):", ""],
+            ["   • razon_social: Razón social (si es diferente al nombre comercial)", ""],
+            ["   • tipo_identificacion: NIT, CC, CE, TI, RC, PA", ""],
+            ["   • numero_identificacion: Número del documento", ""],
+            ["   • email: Correo electrónico", ""],
+            ["   • telefono: Número de teléfono", ""],
+            ["   • direccion: Dirección completa", ""],
+            ["   • ciudad: Ciudad donde se ubica", ""],
+            ["   • departamento: Departamento (use la lista desplegable)", ""],
+            ["", ""],
+            ["3. Notas importantes:", ""],
+            ["   • El número de identificación debe ser único", ""],
+            ["   • Use el formato completo para teléfonos (ej: 601 234 5678)", ""],
+            ["   • Para NIT incluya el dígito verificador (ej: 900123456-7)", ""],
+            ["   • No modifique los encabezados de las columnas", ""],
+            ["   • Elimine la fila de ejemplo antes de importar", ""],
+            ["", ""],
+            ["4. Departamentos y ciudades válidos:", ""]
+        ]
+        
+        # Escribir instrucciones
+        for row, (inst, desc) in enumerate(instrucciones, 1):
+            ws_inst.cell(row=row, column=1, value=inst)
+            if desc:
+                ws_inst.cell(row=row, column=2, value=desc)
+        
+        # Formatear título de instrucciones
+        title_cell = ws_inst.cell(row=1, column=1)
+        title_cell.font = Font(bold=True, size=14, color="E85A0C")
+        
+        # Agregar lista de departamentos y ciudades
+        current_row = len(instrucciones) + 2
+        for depto, ciudades in DEPARTAMENTOS_CIUDADES.items():
+            ws_inst.cell(row=current_row, column=1, value=depto)
+            ws_inst.cell(row=current_row, column=2, value=", ".join(ciudades[:5]) + ("..." if len(ciudades) > 5 else ""))
+            current_row += 1
+        
+        # Ajustar ancho de columnas en instrucciones
+        ws_inst.column_dimensions['A'].width = 30
+        ws_inst.column_dimensions['B'].width = 50
+        
+        # Guardar en buffer
         output = io.BytesIO()
-        
-        # Escribir el DataFrame al buffer como Excel sin comentarios
-        df.to_excel(output, engine='openpyxl', sheet_name='Clientes', index=False)
-        
+        wb.save(output)
         output.seek(0)
         
         # Generar nombre del archivo con fecha
         fecha_actual = datetime.now().strftime('%Y%m%d_%H%M%S')
-        nombre_archivo = f'plantilla_clientes_{fecha_actual}.xlsx'
+        nombre_archivo = f'plantilla_clientes_florez_{fecha_actual}.xlsx'
         
         return send_file(
             output,

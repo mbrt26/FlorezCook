@@ -60,6 +60,15 @@ handlers:
   upload: static/favicon.ico
   expiration: 7d
 
+# Rutas específicas del portal de clientes
+- url: /cliente.*
+  script: auto
+  secure: always
+
+- url: /portal-cliente.*
+  script: auto
+  secure: always
+
 # Rutas API
 - url: /api/.*
   script: auto

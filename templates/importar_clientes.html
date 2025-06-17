@@ -10,15 +10,35 @@
     </div>
     <div class="card-body">
         <div class="alert alert-info mb-4">
-            <h5 class="alert-heading">Instrucciones para importar clientes</h5>
+            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Instrucciones para importar clientes</h5>
             <p class="mb-2">Siga estos pasos para importar clientes desde un archivo Excel:</p>
-            <ol class="mb-0">
-                <li>Descargue la <a href="{{ url_for('clientes.descargar_plantilla') }}" class="fw-bold text-decoration-none">
-                    <i class="fas fa-download me-1"></i>plantilla de ejemplo
-                </a> para asegurar el formato correcto.</li>
-                <li>Complete los datos de los clientes en la plantilla.</li>
-                <li>Seleccione el archivo Excel y haga clic en "Importar".</li>
+            <ol class="mb-3">
+                <li><strong>Descargue la plantilla:</strong> 
+                    <a href="{{ url_for('clientes.descargar_plantilla') }}" class="btn btn-sm btn-outline-primary ms-2">
+                        <i class="fas fa-download me-1"></i>Descargar Plantilla Excel
+                    </a>
+                </li>
+                <li><strong>Complete los datos:</strong> Llene la información de los clientes en la plantilla descargada.</li>
+                <li><strong>Elimine el ejemplo:</strong> Borre la fila de ejemplo antes de importar.</li>
+                <li><strong>Importe el archivo:</strong> Seleccione su archivo completado y haga clic en "Importar".</li>
             </ol>
+            
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h6 class="text-primary"><i class="fas fa-exclamation-triangle me-1"></i>Campos Obligatorios:</h6>
+                    <ul class="small mb-0">
+                        <li><strong>Nombre Comercial:</strong> Nombre de la empresa</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-info"><i class="fas fa-list me-1"></i>Campos Opcionales:</h6>
+                    <ul class="small mb-0">
+                        <li>Razón Social, Tipo y Número de Identificación</li>
+                        <li>Email, Teléfono, Dirección</li>
+                        <li>Ciudad, Departamento</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <form method="POST" action="{{ url_for('clientes.importar') }}" enctype="multipart/form-data">
@@ -34,16 +54,101 @@
         
         {% if resultados %}
         <div class="mt-4">
-            <h5>Resultados de la importación</h5>
-            <div class="alert alert-{{ 'success' if resultados.exito else 'danger' }}">
+            <h5><i class="fas fa-chart-bar me-2"></i>Resultados de la Importación</h5>
+            
+            <!-- Estadísticas resumidas -->
+            {% if resultados.procesados is defined %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h4 class="mb-1">{{ resultados.procesados or 0 }}</h4>
+                            <small>Filas Procesadas</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4 class="mb-1">{{ resultados.exitosos or 0 }}</h4>
+                            <small>Clientes Importados</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h4 class="mb-1">{{ resultados.errores|length if resultados.errores else 0 }}</h4>
+                            <small>Errores</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4 class="mb-1">{{ "%.1f"|format(((resultados.exitosos or 0) / (resultados.procesados or 1)) * 100) }}%</h4>
+                            <small>Tasa de Éxito</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Mensaje principal -->
+            <div class="alert alert-{{ 'success' if resultados.exito else 'warning' }}">
+                <h6 class="alert-heading">
+                    <i class="fas fa-{{ 'check-circle' if resultados.exito else 'exclamation-triangle' }} me-2"></i>
+                    {{ 'Importación Exitosa' if resultados.exito else 'Importación con Errores' }}
+                </h6>
                 {{ resultados.mensaje }}
-                {% if resultados.errores %}
-                <ul class="mt-2 mb-0">
-                    {% for error in resultados.errores %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
+            </div>
+            
+            <!-- Lista de errores detallada -->
+            {% if resultados.errores %}
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Detalles de Errores ({{ resultados.errores|length }})</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="10%">#</th>
+                                    <th width="90%">Descripción del Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for error in resultados.errores %}
+                                <tr>
+                                    <td><span class="badge bg-danger">{{ loop.index }}</span></td>
+                                    <td>{{ error }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if resultados.exitosos and resultados.exitosos > 0 %}
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Sugerencia:</strong> Corrija los errores en su archivo Excel y vuelva a importar solo las filas con problemas.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Botones de acción -->
+            <div class="mt-3">
+                {% if resultados.exitosos and resultados.exitosos > 0 %}
+                <a href="{{ url_for('clientes.lista') }}" class="btn btn-success">
+                    <i class="fas fa-users me-1"></i> Ver Clientes Importados
+                </a>
                 {% endif %}
+                <a href="{{ url_for('clientes.importar') }}" class="btn btn-secondary">
+                    <i class="fas fa-redo me-1"></i> Nueva Importación
+                </a>
             </div>
         </div>
         {% endif %}

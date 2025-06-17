@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g, current_app
 from config.database import db_config
 from models import Producto, Cliente, Pedido, PedidoProducto
 import business_logic
@@ -39,6 +39,19 @@ def form():
                     'departamento_entrega': cliente.departamento,
                     'show_welcome_message': show_welcome
                 }
+
+        # Detectar si estamos en el portal de clientes - MEJORADO
+        # Múltiples métodos de detección para mayor robustez
+        is_cliente_portal = (
+            (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) or
+            (current_app.config.get('IS_CLIENTE_PORTAL', False)) or
+            ('cliente' in request.host.lower()) or  # Detectar por hostname
+            (request.headers.get('Host', '').startswith('cliente-dot-'))  # Detectar por header Host
+        )
+        template_name = 'pedido_form_cliente.html' if is_cliente_portal else 'pedido_form.html'
+        
+        # Log para debugging (TEMPORAL: forzado para diagnosticar)
+        logger.warning(f"🔍 PEDIDOS TEMPLATE DEBUG - is_cliente_portal: {is_cliente_portal}, template: {template_name}, host: {request.host}, g: {hasattr(g, 'is_cliente_portal')}, config: {current_app.config.get('IS_CLIENTE_PORTAL', False)}")
 
         if request.method == 'POST':
             form_data = dict(request.form)
@@ -84,7 +97,7 @@ def form():
                 form_state['show_seccion_registro'] = bool(form_data.get('show_seccion_registro'))
                 form_state['show_seccion_despacho'] = True
                 form_state['show_subform_pedido'] = True
-                return render_template('pedido_form.html', 
+                return render_template(template_name, 
                                      form_data=form_state, 
                                      productos=productos_dict, 
                                      current_year=current_year)
@@ -93,7 +106,7 @@ def form():
             form_state.update(cliente_data)  # Prefill with client data
             show_welcome_message = request.args.get('show_welcome', '').lower() == 'true'
             
-            return render_template('pedido_form.html', 
+            return render_template(template_name, 
                                 form_data=form_state, 
                                 productos=productos_dict, 
                                 current_year=current_year,

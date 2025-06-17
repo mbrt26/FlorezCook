@@ -1,0 +1,52 @@
+runtime: python311
+service: cliente
+instance_class: F1
+automatic_scaling:
+  min_instances: 1
+  max_instances: 5
+
+env_variables:
+  ENV: production
+  DB_USER: florezcook_app
+  DB_PASS: Catalina18
+  DB_NAME: florezcook_db
+  CLOUD_SQL_CONNECTION_NAME: appsindunnova:southamerica-east1:florezcook-instance
+  FLASK_ENV: production
+  PYTHONUNBUFFERED: '1'
+  LOG_LEVEL: WARNING
+  SECRET_KEY: florezcook-cliente-portal-2025-secure
+  PYTHONDONTWRITEBYTECODE: '1'
+
+handlers:
+# Archivos estáticos
+- url: /static/(.*)
+  static_files: static/\1
+  upload: static/.*
+  expiration: 1h
+
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+  expiration: 7d
+
+# Todas las rutas van a la app cliente exclusiva
+- url: /.*
+  script: auto
+  secure: always
+
+network:
+  instance_tag: florezcook-cliente
+
+health_check:
+  enable_health_check: true
+  check_interval_sec: 30
+  timeout_sec: 4
+  unhealthy_threshold: 2
+  healthy_threshold: 2
+
+resources:
+  cpu: 0.5
+  memory_gb: 0.5
+
+beta_settings:
+  cloud_sql_instances: appsindunnova:southamerica-east1:florezcook-instance
