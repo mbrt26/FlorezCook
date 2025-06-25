@@ -39,6 +39,8 @@ class Producto(Base):
     formulacion_grupo = Column(String(100))
     categoria_linea = Column(String(100))
     descripcion = Column(Text)
+    presentacion1 = Column(String(255))  # Nueva presentación 1
+    presentacion2 = Column(String(255))  # Nueva presentación 2
     precio_unitario = Column(Numeric(10, 2), default=0)  # Cambio de Float a Numeric para coincidir con DECIMAL(10,2)
     unidad_medida = Column(String(20), default='unidad')  # Ajustado a VARCHAR(20)
     estado = Column(String(20), default='activo')  # Ajustado a VARCHAR(20) y valor por defecto

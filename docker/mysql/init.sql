@@ -1,3 +1,38 @@
+-- Script de inicialización para FlorezCook Database
+-- Se ejecuta automáticamente cuando se crea el contenedor MySQL
+
+-- Configurar charset y collation
+ALTER DATABASE florezcook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Configuraciones MySQL optimizadas para FlorezCook
+SET GLOBAL innodb_buffer_pool_size = 268435456; -- 256MB
+SET GLOBAL max_connections = 200;
+SET GLOBAL innodb_log_file_size = 67108864; -- 64MB
+SET GLOBAL query_cache_size = 16777216; -- 16MB
+SET GLOBAL query_cache_type = 1;
+
+-- Usar la base de datos FlorezCook
+USE florezcook;
+
+-- Mensaje de confirmación
+SELECT 'FlorezCook Database inicializada correctamente' as mensaje;
+
+-- Configurar zona horaria para Colombia
+SET time_zone = '-05:00';
+
+-- Configurar formato de fechas
+SET sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
+
+-- Crear usuario adicional de solo lectura para reportes (opcional)
+CREATE USER IF NOT EXISTS 'florezcook_readonly'@'%' IDENTIFIED BY 'readonly_pass_2025';
+GRANT SELECT ON florezcook.* TO 'florezcook_readonly'@'%';
+
+-- Flush privileges
+FLUSH PRIVILEGES;
+
+-- Log final
+SELECT 'Configuración de FlorezCook MySQL completada' as status;
+
 -- [START init_sql]
 -- Crear la base de datos si no existe
 CREATE DATABASE IF NOT EXISTS `florezcook_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

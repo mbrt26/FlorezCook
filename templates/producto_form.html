@@ -25,6 +25,14 @@
                 <label class="form-label">Línea</label>
                 <input type="text" class="form-control" name="categoria_linea" value="{{ producto.categoria_linea if producto else '' }}">
             </div>
+            <div class="mb-3">
+                <label class="form-label">Presentación 1</label>
+                <input type="text" class="form-control" name="presentacion1" value="{{ producto.presentacion1 if producto else '' }}" placeholder="Primera opción de presentación para pedidos">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Presentación 2</label>
+                <input type="text" class="form-control" name="presentacion2" value="{{ producto.presentacion2 if producto else '' }}" placeholder="Segunda opción de presentación para pedidos">
+            </div>
             <div class="d-flex justify-content-between">
                 <a href="{{ url_for('productos.lista') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Cancelar

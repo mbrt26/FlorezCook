@@ -116,7 +116,9 @@ def create_cliente_app():
                     'display': f"{p.codigo} - {p.referencia_de_producto} - {p.categoria_linea or 'Sin línea'}",
                     'gramaje_g': p.gramaje_g,
                     'formulacion_grupo': p.formulacion_grupo or '',
-                    'categoria_linea': p.categoria_linea or ''
+                    'categoria_linea': p.categoria_linea or '',
+                    'presentacion1': p.presentacion1 or '',
+                    'presentacion2': p.presentacion2 or ''
                 } for p in productos])
             finally:
                 db.close()

@@ -188,7 +188,7 @@
                                         <th style="display: none;">Línea</th>
                                         <th style="display: none;">Peso Total (g)</th>
                                         <th>Fecha de Entrega</th>
-                                        <th>Comentarios</th>
+                                        <th>Presentación</th>
                                         <th>Estado</th>
                                         <th></th>
                                     </tr>
@@ -233,8 +233,12 @@
                                         <td style="display: none;"><input type="text" class="form-control" name="grupo_item_{{ loop.index0 }}" value="{{ item.grupo_item }}" readonly></td>
                                         <td style="display: none;"><input type="text" class="form-control" name="linea_item_{{ loop.index0 }}" value="{{ item.linea_item }}" readonly></td>
                                         <td style="display: none;"><input type="number" class="form-control" name="peso_total_g_item_{{ loop.index0 }}" value="{{ item.peso_total_g_item }}" readonly></td>
-                                        <td><input type="date" class="form-control" name="fecha_de_entrega_item_{{ loop.index0 }}" value="{{ item.fecha_de_entrega_item }}"></td>
-                                        <td><input type="text" class="form-control" name="comentarios_item_{{ loop.index0 }}" value="{{ item.comentarios_item }}"></td>
+                                        <td><input type="date" class="form-control" name="fecha_de_entrega_item_{{ loop.index0 }}" value="{{ item.fecha_de_entrega_item }}" readonly></td>
+                                        <td>
+                                            <select class="form-control presentacion-select" name="presentacion_item_{{ loop.index0 }}" data-index="{{ loop.index0 }}" required>
+                                                <option value="">Seleccionar presentación</option>
+                                            </select>
+                                        </td>
                                         <td>
                                             <select class="form-select" name="estado_del_pedido_item_{{ loop.index0 }}" disabled>
                                                 <option value="En Proceso" selected>En Proceso</option>
@@ -465,32 +469,12 @@ $(document).ready(function() {
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // Función para validar fecha de entrega
-    function validarFechaEntrega(fecha, elemento) {
-        const fechaMinima = obtenerFechaMinimaEntrega();
-        if (fecha < fechaMinima) {
-            // Mostrar mensaje de error
-            elemento.addClass('is-invalid');
-            if (!elemento.next('.invalid-feedback').length) {
-                elemento.after(`<div class="invalid-feedback">La fecha de entrega debe ser al menos ${fechaMinima} (2 días hábiles desde hoy)</div>`);
-            }
-            return false;
-        } else {
-            // Remover mensaje de error
-            elemento.removeClass('is-invalid');
-            elemento.next('.invalid-feedback').remove();
-            return true;
-        }
-    }
-
-    // Función para poner fecha de entrega automática si está vacía
-    function ponerFechaEntregaSiVacia(idx) {
+    // Función para poner fecha de entrega automática (solo lectura)
+    function ponerFechaEntregaAutomatica(idx) {
         let fechaInput = $(`input[name='fecha_de_entrega_item_${idx}']`);
-        if (!fechaInput.val()) {
-            fechaInput.val(obtenerFechaMinimaEntrega());
-        }
-        // Establecer fecha mínima permitida
-        fechaInput.attr('min', obtenerFechaMinimaEntrega());
+        fechaInput.val(obtenerFechaMinimaEntrega());
+        fechaInput.attr('readonly', true);
+        fechaInput.css('background-color', '#f8f9fa');
     }
 
     // Al agregar un producto, poner fecha de entrega automática
@@ -530,8 +514,12 @@ $(document).ready(function() {
             <td style="display: none;"><input type="text" class="form-control" name="grupo_item_${itemIndex}" readonly></td>
             <td style="display: none;"><input type="text" class="form-control" name="linea_item_${itemIndex}" readonly></td>
             <td style="display: none;"><input type="number" class="form-control" name="peso_total_g_item_${itemIndex}" readonly></td>
-            <td><input type="date" class="form-control" name="fecha_de_entrega_item_${itemIndex}"></td>
-            <td><input type="text" class="form-control" name="comentarios_item_${itemIndex}"></td>
+            <td><input type="date" class="form-control" name="fecha_de_entrega_item_${itemIndex}" readonly></td>
+            <td>
+                <select class="form-control presentacion-select" name="presentacion_item_${itemIndex}" data-index="${itemIndex}" required>
+                    <option value="">Seleccionar presentación</option>
+                </select>
+            </td>
             <td>
                 <select class="form-select" name="estado_del_pedido_item_${itemIndex}" disabled>
                     <option value="En Proceso" selected>En Proceso</option>
@@ -592,12 +580,14 @@ $(document).ready(function() {
                 
                 <div class="mb-3">
                     <label class="form-label">Fecha de Entrega</label>
-                    <input type="date" class="form-control" name="fecha_de_entrega_item_${itemIndex}">
+                    <input type="date" class="form-control" name="fecha_de_entrega_item_${itemIndex}" readonly>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Comentarios</label>
-                    <input type="text" class="form-control" name="comentarios_item_${itemIndex}" placeholder="Comentarios adicionales...">
+                    <label class="form-label campo-requerido">Presentación</label>
+                    <select class="form-control presentacion-select" name="presentacion_item_${itemIndex}" data-index="${itemIndex}" required>
+                        <option value="">Seleccionar presentación</option>
+                    </select>
                 </div>
                 
                 <!-- Campos ocultos -->
@@ -619,8 +609,8 @@ $(document).ready(function() {
         }
         $('#mobileProductsContainer').append(mobileCard);
         
-        // Después de agregar la fila, poner la fecha de entrega
-        ponerFechaEntregaSiVacia(itemIndex);
+        // Después de agregar la fila, poner la fecha de entrega automática
+        ponerFechaEntregaAutomatica(itemIndex);
         
         itemIndex++;
     });
@@ -646,23 +636,10 @@ $(document).ready(function() {
         }
     });
     
-    // Event listener para validar fechas de entrega cuando cambien
-    $(document).on('change', 'input[name^="fecha_de_entrega_item_"]', function() {
-        const fecha = $(this).val();
-        if (fecha) {
-            validarFechaEntrega(fecha, $(this));
-        }
-    });
-
-    // Validar fechas existentes al cargar la página
+    // Configurar fechas automáticas al cargar la página
     $('input[name^="fecha_de_entrega_item_"]').each(function() {
         const idx = $(this).attr('name').split('_')[4];
-        ponerFechaEntregaSiVacia(idx);
-        
-        const fecha = $(this).val();
-        if (fecha) {
-            validarFechaEntrega(fecha, $(this));
-        }
+        ponerFechaEntregaAutomatica(idx);
     });
 
     // VALIDACIÓN OPTIMIZADA PARA EL PORTAL DE CLIENTES
@@ -777,11 +754,13 @@ $(document).ready(function() {
                                      data-gramaje="${producto.gramaje_g}"
                                      data-grupo="${producto.formulacion_grupo}"
                                      data-linea="${producto.categoria_linea}"
+                                     data-presentacion1="${producto.presentacion1}"
+                                     data-presentacion2="${producto.presentacion2}"
                                      style="cursor: pointer; padding: 8px 12px; border-bottom: 1px solid #f1f1f1;">
                                     <div style="font-weight: bold; color: #e85a0c; font-size: 13px;">${producto.codigo}</div>
                                     <div style="color: #6c757d; font-size: 12px; line-height: 1.2;">${producto.referencia}</div>
-                                    <div style="color: #007bff; font-size: 11px; font-style: italic;">${producto.categoria_linea || 'Sin línea'}</div>
-                                    <small style="color: #28a745;">${producto.gramaje_g}g</small>
+                                    <div style="color: #007bff; font-size: 11px; font-style: italic;">${producto.formulacion_grupo || 'Sin grupo'}</div>
+                                    <div style="color: #28a745; font-size: 11px;">${producto.categoria_linea || 'Sin línea'}</div>
                                 </div>
                             `);
                             
@@ -817,13 +796,33 @@ $(document).ready(function() {
         const linea = suggestionElement.data('linea');
         
         const index = inputElement.data('index');
+        const presentacion1 = suggestionElement.data('presentacion1');
+        const presentacion2 = suggestionElement.data('presentacion2');
         
-        inputElement.val(`${codigo} - ${referencia} - ${linea || 'Sin línea'}`);
+        // Mostrar solo código y referencia en el campo
+        inputElement.val(`${codigo} - ${referencia}`);
+        
         inputElement.siblings('.producto-id-hidden').val(productId);
         
         $(`input[name='gramaje_g_item_${index}']`).val(gramaje);
         $(`input[name='grupo_item_${index}']`).val(grupo);
         $(`input[name='linea_item_${index}']`).val(linea);
+        
+        // Llenar dropdown de presentaciones dinámicamente
+        const presentacionSelect = $(`select[name='presentacion_item_${index}']`);
+        presentacionSelect.empty().append('<option value="">Seleccionar presentación</option>');
+        
+        if (presentacion1) {
+            presentacionSelect.append(`<option value="${presentacion1}">${presentacion1}</option>`);
+        }
+        if (presentacion2) {
+            presentacionSelect.append(`<option value="${presentacion2}">${presentacion2}</option>`);
+        }
+        
+        // Si no hay presentaciones, mostrar mensaje
+        if (!presentacion1 && !presentacion2) {
+            presentacionSelect.append('<option value="" disabled>No hay presentaciones definidas</option>');
+        }
         
         suggestionElement.closest('.producto-suggestions').removeClass('show');
         

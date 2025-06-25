@@ -123,9 +123,21 @@
                                    value="{{ item.gramaje_g_item }}" readonly>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Comentarios</label>
-                            <input type="text" class="form-control" name="comentarios_item_{{ loop.index0 }}" 
-                                   value="{{ item.comentarios_item or '' }}">
+                            <label class="form-label campo-requerido">Presentación</label>
+                            <select class="form-control presentacion-select" name="presentacion_item_{{ loop.index0 }}" data-index="{{ loop.index0 }}" required>
+                                <option value="">Seleccionar presentación</option>
+                                {% if item.producto_id %}
+                                    {% set producto = productos | selectattr('id', 'equalto', item.producto_id) | first %}
+                                    {% if producto %}
+                                        {% if producto.presentacion1 %}
+                                            <option value="{{ producto.presentacion1 }}" {% if item.presentacion_item == producto.presentacion1 %}selected{% endif %}>{{ producto.presentacion1 }}</option>
+                                        {% endif %}
+                                        {% if producto.presentacion2 %}
+                                            <option value="{{ producto.presentacion2 }}" {% if item.presentacion_item == producto.presentacion2 %}selected{% endif %}>{{ producto.presentacion2 }}</option>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </select>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Fecha Entrega</label>
@@ -346,8 +358,10 @@ $(document).ready(function() {
                     <input type="number" step="0.01" class="form-control gramaje-input" name="gramaje_g_item_${newIndex}" readonly>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Comentarios</label>
-                    <input type="text" class="form-control" name="comentarios_item_${newIndex}">
+                    <label class="form-label campo-requerido">Presentación</label>
+                    <select class="form-control presentacion-select" name="presentacion_item_${newIndex}" data-index="${newIndex}" required>
+                        <option value="">Seleccionar presentación</option>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Fecha Entrega</label>

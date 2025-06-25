@@ -291,12 +291,13 @@ def validar_datos_pedido(form_data: dict) -> list:
                 errors.append(f"Ítem {i+1}: La fecha de entrega es obligatoria.")
             
             # Validar que la fecha de entrega sea una fecha válida (formato YYYY-MM-DD)
-            # y que sea posterior a la fecha mínima de entrega
+            # NOTA: La validación de fecha mínima se removió porque ahora se calcula automáticamente
             try:
                 if item.get('fecha_de_entrega_item'):
                     fecha_entrega = datetime.date.fromisoformat(item.get('fecha_de_entrega_item'))
-                    if fecha_entrega < fecha_minima_entrega:
-                        errors.append(f"Ítem {i+1}: La fecha de entrega debe ser al menos {fecha_minima_entrega.strftime('%d/%m/%Y')} (2 días hábiles desde hoy).")
+                    # Comentado: Ya no validamos fecha mínima porque se calcula automáticamente
+                    # if fecha_entrega < fecha_minima_entrega:
+                    #     errors.append(f"Ítem {i+1}: La fecha de entrega debe ser al menos {fecha_minima_entrega.strftime('%d/%m/%Y')} (2 días hábiles desde hoy).")
             except ValueError:
                 errors.append(f"Ítem {i+1}: Formato de fecha de entrega inválido. Usar YYYY-MM-DD.")
 

@@ -1,67 +1,9 @@
 # [START dockerignore]
-# Git
-.git
-.gitignore
-.github
-
-# Python
-__pycache__
+# Archivos de Python
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-venv/
-ENV/
-.venv
-
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Virtual environment
-venv-*/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*.sublime-*
-
-# Logs
-*.log
-logs/
-
-# Local development
-local_settings.py
-
-# Database
-*.db
-*.sqlite3
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-
-# Documentation
-docs/_build/
-
-# Local development
-instance/
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -79,93 +21,97 @@ wheels/
 .installed.cfg
 *.egg
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Local development
-.local/
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.target/
-
-# pyenv
-.python-version
-
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
+# Entornos virtuales
 .env
 .venv
 env/
 venv/
 ENV/
+env.bak/
+venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+florez_cook.db
 
-# Rope project settings
-.ropeproject
+# Logs y archivos temporales
+*.log
+logs/
+*.tmp
+*.temp
 
-# mkdocs documentation
-/site
+# Archivos de backup
+*.backup
+*.backup-*
+*.old
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# PyCharm
-.idea/
-*.iml
-
-# VSCode
-.vscode/
-*.code-workspace
+# Archivos de configuración local
+.env.local
+.env.development
+.env.test
+config.local.py
 
 # Docker
-Dockerfile
 .dockerignore
+Dockerfile*
+docker-compose*.yml
 
-# Local development
-*.local
+# Git
+.git
+.gitignore
+.gitattributes
 
-# Secrets
-secrets.yaml
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Media and static files
-media/
-staticfiles/
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
+# Archivos específicos de FlorezCook que no necesitan en contenedor
+app.yaml*
+dispatch.yaml
+cloudbuild.yaml
+*.sh
+DEPLOYMENT*.md
+README.md
+CHANGELOG.md
+Makefile
+pyproject.toml
+setup.cfg
+
+# Archivos de diagnóstico y monitoreo
+diagnostico_*.py
+diagnostico_*.json
+monitoreo_*.sh
+optimizar_*.py
+
+# Scripts de fix y migration específicos del entorno local
+fix_*.py
+fix_*.sh
+fix_*.sql
+migrate_*.py
+update_*.py
+verify_*.py
+actualizar_*.py
+inicializar_*.py
+check_*.py
+
+# Archivos de texto de documentación específicos (NO requirements.txt)
+FlorezZoho.txt
+RESUMEN_*.txt
+
+# IMPORTANTE: NO excluir requirements.txt - es necesario para Docker build
+# requirements.txt debe estar disponible para el contexto de Docker
 # [END dockerignore]

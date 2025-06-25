@@ -65,7 +65,9 @@ def api_buscar():
                 'display': f"{p.codigo} - {p.referencia_de_producto} - {p.categoria_linea or 'Sin línea'}",
                 'gramaje_g': p.gramaje_g,
                 'formulacion_grupo': p.formulacion_grupo or '',
-                'categoria_linea': p.categoria_linea or ''
+                'categoria_linea': p.categoria_linea or '',
+                'presentacion1': p.presentacion1 or '',
+                'presentacion2': p.presentacion2 or ''
             })
         
         return jsonify(resultados)
@@ -114,7 +116,9 @@ def api_filtrar():
                 'referencia_de_producto': p.referencia_de_producto,
                 'gramaje_g': p.gramaje_g,
                 'formulacion_grupo': p.formulacion_grupo or '',
-                'categoria_linea': p.categoria_linea or ''
+                'categoria_linea': p.categoria_linea or '',
+                'presentacion1': p.presentacion1 or '',
+                'presentacion2': p.presentacion2 or ''
             })
         
         return jsonify({
@@ -143,6 +147,8 @@ def agregar():
             gramaje = request.form.get('gramaje_g')
             grupo = request.form.get('formulacion_grupo')
             linea = request.form.get('categoria_linea')
+            presentacion1 = request.form.get('presentacion1')
+            presentacion2 = request.form.get('presentacion2')
             
             if not codigo or not referencia or not gramaje:
                 flash('Todos los campos obligatorios deben ser completados.', 'danger')
@@ -153,7 +159,9 @@ def agregar():
                 referencia_de_producto=referencia, 
                 gramaje_g=gramaje, 
                 formulacion_grupo=grupo, 
-                categoria_linea=linea
+                categoria_linea=linea,
+                presentacion1=presentacion1,
+                presentacion2=presentacion2
             )
             db.add(prod)
             db.commit()
@@ -182,6 +190,8 @@ def editar(producto_id):
             prod.gramaje_g = request.form.get('gramaje_g')
             prod.formulacion_grupo = request.form.get('formulacion_grupo')
             prod.categoria_linea = request.form.get('categoria_linea')
+            prod.presentacion1 = request.form.get('presentacion1')
+            prod.presentacion2 = request.form.get('presentacion2')
             db.commit()
             flash('Producto actualizado correctamente.', 'success')
             return redirect(url_for('productos.lista'))
@@ -249,16 +259,32 @@ def importar():
                     resultados = {'exito': True, 'mensaje': 'Productos importados correctamente', 'errores': []}
                     for _, fila in df.iterrows():
                         try:
+                            # Función para manejar valores NaN
+                            def safe_get(key, default=''):
+                                val = fila.get(key, default)
+                                return default if pd.isna(val) else val
+                            
+                            def safe_get_float(key, default=0.0):
+                                val = fila.get(key, default)
+                                if pd.isna(val):
+                                    return default
+                                try:
+                                    return float(val)
+                                except (ValueError, TypeError):
+                                    return default
+                            
                             producto = Producto(
-                                codigo=fila.get('codigo', ''),
-                                referencia_de_producto=fila.get('referencia_de_producto', ''),
-                                gramaje_g=float(fila.get('gramaje_g', 0)),
-                                formulacion_grupo=fila.get('formulacion_grupo', ''),
-                                categoria_linea=fila.get('categoria_linea', ''),
-                                descripcion=fila.get('descripcion', ''),
-                                precio_unitario=float(fila.get('precio_unitario', 0)) if pd.notna(fila.get('precio_unitario')) else 0,
-                                unidad_medida=fila.get('unidad_medida', 'unidad'),
-                                estado='Activo' if fila.get('estado', '').lower() in ['activo', '1', 'sí', 'si', 'true'] else 'Inactivo'
+                                codigo=safe_get('codigo'),
+                                referencia_de_producto=safe_get('referencia_de_producto'),
+                                gramaje_g=safe_get_float('gramaje_g', 0.0),
+                                formulacion_grupo=safe_get('formulacion_grupo'),
+                                categoria_linea=safe_get('categoria_linea'),
+                                descripcion=safe_get('descripcion'),
+                                presentacion1=safe_get('presentacion1'),
+                                presentacion2=safe_get('presentacion2'),
+                                precio_unitario=safe_get_float('precio_unitario', 0.0),
+                                unidad_medida=safe_get('unidad_medida', 'unidad'),
+                                estado='Activo' if str(safe_get('estado', '')).lower() in ['activo', '1', 'sí', 'si', 'true'] else 'Inactivo'
                             )
                             db.add(producto)
                             db.commit()

@@ -78,7 +78,7 @@ def form():
                         'grupo_item': form_data.get(f'grupo_item_{idx}', ''),
                         'linea_item': form_data.get(f'linea_item_{idx}', ''),
                         'fecha_de_entrega_item': form_data.get(f'fecha_de_entrega_item_{idx}', ''),
-                        'comentarios_item': form_data.get(f'comentarios_item_{idx}', ''),  # CAMBIADO: De observaciones_item a comentarios_item
+                        'comentarios_item': form_data.get(f'presentacion_item_{idx}', ''),  # CAMBIADO: De comentarios_item a presentacion_item
                         'estado_del_pedido_item': form_data.get(f'estado_del_pedido_item_{idx}', 'Pendiente'),
                     })
                 idx += 1
@@ -287,7 +287,7 @@ def editar(pedido_id):
                             linea_item=request.form.get(f'linea_item_{idx}', ''),
                             fecha_de_entrega_item=fecha_entrega,
                             estado_del_pedido_item=request.form.get(f'estado_del_pedido_item_{idx}', 'Pendiente'),
-                            comentarios_item=request.form.get(f'comentarios_item_{idx}', '')  # CAMBIADO: De observaciones_item a comentarios_item
+                            comentarios_item=request.form.get(f'presentacion_item_{idx}', '')  # CAMBIADO: De comentarios_item a presentacion_item
                         )
                         db.add(item)
                     idx += 1

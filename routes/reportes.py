@@ -122,11 +122,11 @@ def consolidado_productos():
         categoria = request.args.get('categoria', '')
         formulacion = request.args.get('formulacion', '')
 
-        # Query base para obtener items de pedidos con información de productos e incluir comentarios
+        # Query base para obtener items de pedidos con información de productos e incluir presentaciones
         query = db.query(
             PedidoProducto.cantidad,
             PedidoProducto.peso_total_g_item,
-            PedidoProducto.comentarios_item,
+            PedidoProducto.comentarios_item.label('presentacion'),
             Producto.referencia_de_producto,
             Producto.formulacion_grupo,
             Producto.categoria_linea,
@@ -167,6 +167,7 @@ def consolidado_productos():
         # Agrupar por categoría, luego por formulación, luego por referencia de producto
         resultados_agrupados = {}
         subtotales_referencia = {}
+        subtotales_presentacion = {}
         subtotales_formulacion = {}
         totales_categoria = {}
         total_cantidad = 0
@@ -176,6 +177,7 @@ def consolidado_productos():
             categoria_key = resultado.categoria_linea or 'Sin Categoría'
             formulacion_key = resultado.formulacion_grupo or 'Sin Formulación'
             referencia_key = resultado.referencia_de_producto or 'Sin Referencia'
+            presentacion_key = resultado.presentacion or 'Sin Presentación'
             
             # Inicializar estructura de categoría si no existe
             if categoria_key not in resultados_agrupados:
@@ -191,13 +193,18 @@ def consolidado_productos():
             if referencia_key not in resultados_agrupados[categoria_key][formulacion_key]:
                 resultados_agrupados[categoria_key][formulacion_key][referencia_key] = []
                 subtotales_referencia[f"{categoria_key}|{formulacion_key}|{referencia_key}"] = {'cantidad': 0, 'peso': 0}
+            
+            # Inicializar subtotal por referencia + presentación
+            subtotal_pres_key = f"{categoria_key}|{formulacion_key}|{referencia_key}|{presentacion_key}"
+            if subtotal_pres_key not in subtotales_presentacion:
+                subtotales_presentacion[subtotal_pres_key] = {'cantidad': 0, 'peso': 0}
 
             # Crear objeto de item
             item = {
                 'categoria': resultado.categoria_linea,
                 'formulacion': resultado.formulacion_grupo,
                 'referencia': resultado.referencia_de_producto,
-                'comentarios': resultado.comentarios_item or '',
+                'presentacion': resultado.presentacion or '',
                 'pedido_id': resultado.pedido_id,
                 'total_cantidad': resultado.cantidad or 0,
                 'total_peso': resultado.peso_total_g_item or 0
@@ -253,6 +260,7 @@ def consolidado_productos():
         return render_template('consolidado_productos.html',
                              resultados_agrupados=resultados_agrupados,
                              subtotales_referencia=subtotales_referencia,
+                             subtotales_presentacion=subtotales_presentacion,
                              subtotales_formulacion=subtotales_formulacion,
                              totales_categoria=totales_categoria,
                              total_cantidad=total_cantidad,
@@ -392,16 +400,16 @@ def exportar_pedidos_excel():
                                     'codigo': item.producto_asociado.codigo,
                                     'referencia': item.producto_asociado.referencia_de_producto,
                                     'cantidad_total': 0,
-                                    'comentarios': []
+                                    'presentaciones': []
                                 }
                             
                             # Sumar cantidad
                             productos_consolidados[producto_key]['cantidad_total'] += item.cantidad or 0
                             
-                            # Recopilar comentarios únicos
+                            # Recopilar presentaciones únicas
                             if item.comentarios_item and item.comentarios_item.strip():
-                                if item.comentarios_item not in productos_consolidados[producto_key]['comentarios']:
-                                    productos_consolidados[producto_key]['comentarios'].append(item.comentarios_item)
+                                if item.comentarios_item not in productos_consolidados[producto_key]['presentaciones']:
+                                    productos_consolidados[producto_key]['presentaciones'].append(item.comentarios_item)
                     
                     # Nivel 3: Items consolidados de productos
                     for producto_key, producto_data in productos_consolidados.items():
@@ -414,9 +422,9 @@ def exportar_pedidos_excel():
                         # Cantidad total consolidada
                         ws.cell(row=row, column=3, value=f"{producto_data['cantidad_total']} unidades")
                         
-                        # Comentarios consolidados
-                        comentarios_texto = "; ".join(producto_data['comentarios']) if producto_data['comentarios'] else 'Sin comentarios'
-                        ws.cell(row=row, column=4, value=comentarios_texto)
+                        # Presentaciones consolidadas
+                        presentaciones_texto = "; ".join(producto_data['presentaciones']) if producto_data['presentaciones'] else 'Sin presentaciones'
+                        ws.cell(row=row, column=4, value=presentaciones_texto)
                         
                         # Dirección
                         direccion_completa = []
@@ -486,7 +494,7 @@ def exportar_consolidado_excel():
         query = db.query(
             PedidoProducto.cantidad,
             PedidoProducto.peso_total_g_item,
-            PedidoProducto.comentarios_item,
+            PedidoProducto.comentarios_item.label('presentacion'),
             Producto.referencia_de_producto,
             Producto.formulacion_grupo,
             Producto.categoria_linea,
@@ -552,7 +560,7 @@ def exportar_consolidado_excel():
                 'categoria': resultado.categoria_linea,
                 'formulacion': resultado.formulacion_grupo,
                 'referencia': resultado.referencia_de_producto,
-                'comentarios': resultado.comentarios_item or '',
+                'presentacion': resultado.presentacion or '',
                 'pedido_id': resultado.pedido_id,
                 'total_cantidad': resultado.cantidad or 0,
                 'total_peso': resultado.peso_total_g_item or 0
@@ -601,7 +609,7 @@ def exportar_consolidado_excel():
 
         # Encabezados
         headers = [
-            "Formulación", "Referencia de Producto", "Comentarios",
+            "Formulación", "Referencia de Producto", "Presentación",
             "# Pedido", "Cantidad", "Peso Total (g)"
         ]
         
@@ -646,7 +654,7 @@ def exportar_consolidado_excel():
                         for item in items:
                             ws.cell(row=row, column=1, value=item['formulacion'] or '-')
                             ws.cell(row=row, column=2, value=item['referencia'] or '-')
-                            ws.cell(row=row, column=3, value=item['comentarios'] or '-')
+                            ws.cell(row=row, column=3, value=item['presentacion'] or '-')
                             ws.cell(row=row, column=4, value=item['pedido_id'])
                             
                             # Cantidad y peso con formato numérico y alineación derecha

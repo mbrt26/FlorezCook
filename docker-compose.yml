@@ -2,143 +2,65 @@
 version: '3.8'
 
 services:
-  # Application Service
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: florezcook-app
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - FLASK_APP=main.py
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-      - DATABASE_URL=mysql+pymysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}
-    ports:
-      - "8080:8080"
-    volumes:
-      - .:/app
-      - /app/instance
-    depends_on:
-      - db
-    networks:
-      - app-network
-    # Command to run the development server
-    command: >
-      sh -c "flask run --host=0.0.0.0 --port=8080"
-
-  # Database Service (MySQL 8.0)
-  db:
+  # Base de datos MySQL (simplificado para desarrollo rápido)
+  database:
     image: mysql:8.0
     container_name: florezcook-db
     restart: unless-stopped
-    env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-florezcook_root_2025_secure}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-florezcook}
+      MYSQL_USER: ${MYSQL_USER:-florezcook_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-florezcook_pass_2025_secure}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - db_data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
     networks:
-      - app-network
-    # Health check for the database
+      - florezcook-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 5s
-      retries: 10
+      timeout: 10s
+      retries: 5
+      interval: 15s
+      start_period: 30s
 
-  # Redis Cache
-  redis:
-    image: redis:6-alpine
-    container_name: florezcook-redis
+  # Solo aplicación Admin para empezar
+  app-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: florezcook-admin
     restart: unless-stopped
     ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+      - "${ADMIN_PORT:-8080}:8080"
+    environment:
+      - ENV=${ENV:-development}
+      - DEBUG=${DEBUG:-true}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-florezcook_user}:${MYSQL_PASSWORD:-florezcook_pass_2025_secure}@database:3306/${MYSQL_DATABASE:-florezcook}
+      - SECRET_KEY=${SECRET_KEY:-docker-florezcook-admin-secret-2025}
+      - FLASK_ENV=${FLASK_ENV:-development}
+    depends_on:
+      database:
+        condition: service_healthy
     networks:
-      - app-network
+      - florezcook-network
+    volumes:
+      - ${LOGS_PATH:-./logs}:/app/logs
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 5s
       retries: 3
+      interval: 20s
+      start_period: 30s
 
-  # Adminer - Database Management
-  adminer:
-    image: adminer:latest
-    container_name: florezcook-adminer
-    restart: unless-stopped
-    environment:
-      - ADMINER_DEFAULT_SERVER=db
-    ports:
-      - "8081:8080"
-    depends_on:
-      - db
-    networks:
-      - app-network
-
-  # Celery Worker
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: florezcook-worker
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - C_FORCE_ROOT=1
-      - FLASK_APP=main.py
-      - FLASK_ENV=development
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
-      - db
-    networks:
-      - app-network
-    command: >
-      sh -c "celery -A app.tasks.celery_worker.celery worker
-             --loglevel=info"
-
-  # Celery Beat
-  beat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: florezcook-beat
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - C_FORCE_ROOT=1
-      - FLASK_APP=main.py
-      - FLASK_ENV=development
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
-      - db
-    networks:
-      - app-network
-    command: >
-      sh -c "celery -A app.tasks.celery_worker.celery beat
-             --loglevel=info"
-
-# Networks
 networks:
-  app-network:
+  florezcook-network:
     driver: bridge
+    name: ${NETWORK_NAME:-florezcook-network}
 
-# Volumes
 volumes:
-  db_data:
-  redis_data:
+  mysql_data:
+    driver: local
+    name: ${MYSQL_DATA_VOLUME:-florezcook-mysql-data}
 # [END docker-compose]

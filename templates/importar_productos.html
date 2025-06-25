@@ -12,11 +12,34 @@
         <div class="alert alert-info mb-4">
             <h5 class="alert-heading">Instrucciones para importar productos</h5>
             <p class="mb-2">Siga estos pasos para importar productos desde un archivo Excel:</p>
-            <ol class="mb-0">
+            <ol class="mb-3">
                 <li>Descargue la <a href="#" id="downloadTemplate">plantilla de ejemplo</a> para asegurar el formato correcto.</li>
                 <li>Complete los datos de los productos en la plantilla.</li>
                 <li>Seleccione el archivo Excel y haga clic en "Importar".</li>
             </ol>
+            
+            <h6 class="mt-3 mb-2">Columnas del archivo Excel:</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-0 small">
+                        <li><strong>codigo</strong> - Código único del producto (requerido)</li>
+                        <li><strong>referencia_de_producto</strong> - Nombre del producto (requerido)</li>
+                        <li><strong>gramaje_g</strong> - Peso en gramos (requerido)</li>
+                        <li><strong>formulacion_grupo</strong> - Grupo de formulación (requerido)</li>
+                        <li><strong>categoria_linea</strong> - Categoría/línea del producto (requerido)</li>
+                        <li><strong>descripcion</strong> - Descripción adicional (opcional)</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="mb-0 small">
+                        <li><strong>presentacion1</strong> - Primera opción de presentación (opcional)</li>
+                        <li><strong>presentacion2</strong> - Segunda opción de presentación (opcional)</li>
+                        <li><strong>precio_unitario</strong> - Precio por unidad (opcional)</li>
+                        <li><strong>unidad_medida</strong> - Unidad de medida (opcional)</li>
+                        <li><strong>estado</strong> - Estado del producto: Activo/Inactivo (opcional)</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <form method="POST" action="{{ url_for('productos.importar') }}" enctype="multipart/form-data">
@@ -63,8 +86,8 @@ $(document).ready(function() {
         e.preventDefault();
         // Crear un libro de Excel con las columnas necesarias
         const data = [
-            ['codigo', 'referencia_de_producto', 'gramaje_g', 'formulacion_grupo', 'categoria_linea', 'descripcion', 'precio_unitario', 'unidad_medida', 'estado'],
-            ['PROD001', 'Pan Francés', '500', 'Panadería', 'Pan', 'Pan francés fresco', '5000', 'unidad', 'Activo']
+            ['codigo', 'referencia_de_producto', 'gramaje_g', 'formulacion_grupo', 'categoria_linea', 'descripcion', 'presentacion1', 'presentacion2', 'precio_unitario', 'unidad_medida', 'estado'],
+            ['PROD001', 'Pan Francés', '500', 'Panadería', 'Pan', 'Pan francés fresco', 'Horneado', 'Pre-horneado', '5000', 'unidad', 'Activo']
         ];
         
         // Crear un libro de Excel

@@ -84,7 +84,7 @@
                         <tr>
                             <th>Formulación</th>
                             <th>Referencia de Producto</th>
-                            <th>Comentarios</th>
+                            <th>Presentación</th>
                             <th># Pedido</th>
                             <th class="text-end">Cantidad</th>
                             <th class="text-end">Peso Total (g)</th>
@@ -116,24 +116,50 @@
                                             </td>
                                         </tr>
                                         
-                                        <!-- Items de la referencia -->
+                                        <!-- Items agrupados por presentación -->
+                                        {% set items_by_presentation = {} %}
                                         {% for item in items %}
-                                        <tr>
-                                            <td class="ps-5">{{ item.formulacion or '-' }}</td>
-                                            <td>{{ item.referencia or '-' }}</td>
-                                            <td>
-                                                {% if item.comentarios %}
-                                                    <span class="text-muted">
-                                                        <i class="fas fa-comment me-1"></i>{{ item.comentarios }}
+                                            {% set pres_key = item.presentacion or 'Sin Presentación' %}
+                                            {% if pres_key not in items_by_presentation %}
+                                                {% set _ = items_by_presentation.update({pres_key: []}) %}
+                                            {% endif %}
+                                            {% set _ = items_by_presentation[pres_key].append(item) %}
+                                        {% endfor %}
+                                        
+                                        {% for presentacion, pres_items in items_by_presentation.items() %}
+                                            <!-- Subtítulo de presentación -->
+                                            <tr class="table-warning">
+                                                <td colspan="6" class="fw-bold ps-6">
+                                                    <i class="fas fa-tag me-2"></i>{{ presentacion }}
+                                                </td>
+                                            </tr>
+                                            
+                                            <!-- Items de la presentación -->
+                                            {% for item in pres_items %}
+                                            <tr>
+                                                <td class="ps-6">{{ item.formulacion or '-' }}</td>
+                                                <td>{{ item.referencia or '-' }}</td>
+                                                <td>
+                                                    <span class="text-success">
+                                                        <i class="fas fa-tag me-1"></i>{{ item.presentacion or '-' }}
                                                     </span>
-                                                {% else %}
-                                                    <span class="text-muted">-</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ item.pedido_id }}</td>
-                                            <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
-                                            <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
-                                        </tr>
+                                                </td>
+                                                <td>{{ item.pedido_id }}</td>
+                                                <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
+                                                <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            
+                                            <!-- Subtotal por presentación -->
+                                            {% set subtotal_cantidad = pres_items | sum(attribute='total_cantidad') %}
+                                            {% set subtotal_peso = pres_items | sum(attribute='total_peso') %}
+                                            <tr class="table-info">
+                                                <td colspan="4" class="text-end fw-bold ps-6">
+                                                    <i class="fas fa-calculator me-1"></i>Subtotal {{ presentacion }}:
+                                                </td>
+                                                <td class="text-end fw-bold">{{ "%0.2f"|format(subtotal_cantidad) }}</td>
+                                                <td class="text-end fw-bold">{{ "%0.2f"|format(subtotal_peso) }}</td>
+                                            </tr>
                                         {% endfor %}
                                         
                                         <!-- Subtotal de Referencia -->
