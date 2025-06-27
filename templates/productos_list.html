@@ -64,11 +64,24 @@
         </div>
     </div>
 
+    <!-- Botón de eliminación múltiple -->
+    <div class="mb-3" id="bulk-actions" style="display: none;">
+        <button type="button" id="eliminar-seleccionados" class="btn btn-danger">
+            <i class="fas fa-trash me-1"></i>Eliminar Seleccionados (<span id="contador-seleccionados">0</span>)
+        </button>
+        <button type="button" id="cancelar-seleccion" class="btn btn-secondary ms-2">
+            <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+    </div>
+
     <!-- Tabla de productos -->
     <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
+                    <th width="50">
+                        <input type="checkbox" id="seleccionar-todos" class="form-check-input" title="Seleccionar todos">
+                    </th>
                     <th>Código</th>
                     <th>Referencia</th>
                     <th>Gramaje (g)</th>
@@ -80,6 +93,9 @@
             <tbody id="productos-tbody">
                 {% for producto in productos %}
                 <tr>
+                    <td>
+                        <input type="checkbox" class="form-check-input producto-checkbox" value="{{ producto.id }}" data-codigo="{{ producto.codigo }}">
+                    </td>
                     <td>{{ producto.codigo }}</td>
                     <td>{{ producto.referencia_de_producto }}</td>
                     <td>{{ producto.gramaje_g }}</td>
@@ -169,6 +185,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const html = productos.map(producto => `
             <tr>
+                <td>
+                    <input type="checkbox" class="form-check-input producto-checkbox" value="${producto.id}" data-codigo="${producto.codigo}">
+                </td>
                 <td>${producto.codigo}</td>
                 <td>${producto.referencia_de_producto}</td>
                 <td>${producto.gramaje_g}</td>
@@ -193,6 +212,9 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
         
         productsTbody.innerHTML = html;
+        
+        // Reinicializar eventos de selección después de actualizar la tabla
+        initializeBulkSelection();
     }
     
     // Función para actualizar el contador
@@ -204,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function mostrarError(mensaje) {
         productsTbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-danger">
+                <td colspan="7" class="text-center text-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>${mensaje}
                 </td>
             </tr>
@@ -228,6 +250,126 @@ document.addEventListener('DOMContentLoaded', function() {
         filtroLinea.value = '';
         filtrarProductos();
     });
+    
+    // === FUNCIONALIDAD DE SELECCIÓN MÚLTIPLE ===
+    
+    const seleccionarTodos = document.getElementById('seleccionar-todos');
+    const bulkActions = document.getElementById('bulk-actions');
+    const contadorSeleccionados = document.getElementById('contador-seleccionados');
+    const eliminarSeleccionados = document.getElementById('eliminar-seleccionados');
+    const cancelarSeleccion = document.getElementById('cancelar-seleccion');
+    
+    // Función para inicializar eventos de selección múltiple
+    function initializeBulkSelection() {
+        // Event listeners para checkboxes individuales
+        document.querySelectorAll('.producto-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', actualizarSeleccion);
+        });
+    }
+    
+    // Función para actualizar estado de selección
+    function actualizarSeleccion() {
+        const checkboxes = document.querySelectorAll('.producto-checkbox');
+        const seleccionados = document.querySelectorAll('.producto-checkbox:checked');
+        
+        // Actualizar checkbox "Seleccionar todos"
+        if (seleccionados.length === 0) {
+            seleccionarTodos.indeterminate = false;
+            seleccionarTodos.checked = false;
+        } else if (seleccionados.length === checkboxes.length) {
+            seleccionarTodos.indeterminate = false;
+            seleccionarTodos.checked = true;
+        } else {
+            seleccionarTodos.indeterminate = true;
+            seleccionarTodos.checked = false;
+        }
+        
+        // Mostrar/ocultar botones de acción masiva
+        if (seleccionados.length > 0) {
+            bulkActions.style.display = 'block';
+            contadorSeleccionados.textContent = seleccionados.length;
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+    
+    // Event listener para "Seleccionar todos"
+    seleccionarTodos.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.producto-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        actualizarSeleccion();
+    });
+    
+    // Event listener para cancelar selección
+    cancelarSeleccion.addEventListener('click', function() {
+        document.querySelectorAll('.producto-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        seleccionarTodos.checked = false;
+        seleccionarTodos.indeterminate = false;
+        bulkActions.style.display = 'none';
+    });
+    
+    // Event listener para eliminar seleccionados
+    eliminarSeleccionados.addEventListener('click', function() {
+        const seleccionados = document.querySelectorAll('.producto-checkbox:checked');
+        
+        if (seleccionados.length === 0) {
+            alert('No hay productos seleccionados');
+            return;
+        }
+        
+        // Obtener códigos de productos para mostrar en confirmación
+        const codigos = Array.from(seleccionados).map(cb => cb.dataset.codigo);
+        const mensaje = `¿Está seguro que desea eliminar ${seleccionados.length} producto${seleccionados.length > 1 ? 's' : ''}?\n\nProductos seleccionados:\n${codigos.join(', ')}`;
+        
+        if (!confirm(mensaje)) {
+            return;
+        }
+        
+        // Obtener IDs de productos seleccionados
+        const ids = Array.from(seleccionados).map(cb => cb.value);
+        
+        // Mostrar indicador de carga
+        loading.style.display = 'block';
+        eliminarSeleccionados.disabled = true;
+        eliminarSeleccionados.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Eliminando...';
+        
+        // Enviar solicitud de eliminación múltiple
+        fetch('{{ url_for("productos.eliminar_multiple") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            eliminarSeleccionados.disabled = false;
+            eliminarSeleccionados.innerHTML = '<i class="fas fa-trash me-1"></i>Eliminar Seleccionados (<span id="contador-seleccionados">0</span>)';
+            
+            if (data.success) {
+                // Recargar la página o actualizar la tabla
+                location.reload();
+            } else {
+                alert('Error al eliminar productos: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            eliminarSeleccionados.disabled = false;
+            eliminarSeleccionados.innerHTML = '<i class="fas fa-trash me-1"></i>Eliminar Seleccionados (<span id="contador-seleccionados">0</span>)';
+            console.error('Error:', error);
+            alert('Error de conexión al eliminar productos');
+        });
+    });
+    
+    // Inicializar selección múltiple al cargar la página
+    initializeBulkSelection();
     
     // Inicializar contador
     actualizarContador({{ productos|length }});

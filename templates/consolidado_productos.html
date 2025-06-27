@@ -52,7 +52,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <label for="formulacion" class="form-label">Formulación</label>
                     <select name="formulacion" id="formulacion" class="form-select">
                         <option value="">Todas las formulaciones</option>
@@ -82,126 +82,88 @@
                 <table class="table table-hover">
                     <thead class="table-dark">
                         <tr>
+                            <th>Categoría</th>
                             <th>Formulación</th>
                             <th>Referencia de Producto</th>
                             <th>Presentación</th>
-                            <th># Pedido</th>
-                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Cantidad Total</th>
                             <th class="text-end">Peso Total (g)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% if resultados_agrupados %}
-                            {% for categoria, formulaciones in resultados_agrupados.items() %}
-                                <!-- Encabezado de Categoría -->
-                                <tr class="table-primary">
-                                    <td colspan="6" class="fw-bold fs-5">
-                                        <i class="fas fa-tags me-2"></i>{{ categoria }}
+                        {% if productos_consolidados %}
+                            {% set current_categoria = '' %}
+                            {% set current_formulacion = '' %}
+                            {% set current_referencia = '' %}
+                            
+                            {% for producto in productos_consolidados %}
+                                <!-- Actualizar variables de control sin mostrar encabezados -->
+                                {% if producto.categoria != current_categoria %}
+                                    {% set current_categoria = producto.categoria %}
+                                    {% set current_formulacion = '' %}
+                                    {% set current_referencia = '' %}
+                                {% endif %}
+                                
+                                {% if producto.formulacion != current_formulacion %}
+                                    {% set current_formulacion = producto.formulacion %}
+                                    {% set current_referencia = '' %}
+                                {% endif %}
+                                
+                                {% if producto.referencia != current_referencia %}
+                                    {% set current_referencia = producto.referencia %}
+                                {% endif %}
+                                
+                                <!-- Fila del producto -->
+                                <tr>
+                                    <td class="ps-6">{{ producto.categoria }}</td>
+                                    <td class="ps-6">{{ producto.formulacion }}</td>
+                                    <td class="ps-6">{{ producto.referencia }}</td>
+                                    <td class="ps-6">
+                                        <span class="text-success">
+                                            <i class="fas fa-tag me-1"></i>{{ producto.presentacion }}
+                                        </span>
                                     </td>
+                                    <td class="text-end">{{ "%0.2f"|format(producto.total_cantidad) }}</td>
+                                    <td class="text-end">{{ "%0.2f"|format(producto.total_peso) }}</td>
                                 </tr>
                                 
-                                {% for formulacion, referencias in formulaciones.items() %}
-                                    <!-- Encabezado de Formulación -->
-                                    <tr class="table-info">
-                                        <td colspan="6" class="fw-bold ps-4">
-                                            <i class="fas fa-flask me-2"></i>{{ formulacion }}
+                                <!-- Subtotal por Referencia (al final de cada grupo de referencia) -->
+                                {% set next_producto = productos_consolidados[loop.index0 + 1] if loop.index0 + 1 < productos_consolidados|length else none %}
+                                {% if not next_producto or next_producto.categoria != producto.categoria or next_producto.formulacion != producto.formulacion or next_producto.referencia != producto.referencia %}
+                                    {% set ref_key = producto.categoria + '|' + producto.formulacion + '|' + producto.referencia %}
+                                    <tr class="table-success">
+                                        <td colspan="4" class="text-end fw-bold ps-6">
+                                            <i class="fas fa-calculator me-1"></i>Subtotal {{ producto.referencia }}:
                                         </td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_referencia[ref_key].cantidad) }}</td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_referencia[ref_key].peso) }}</td>
                                     </tr>
-                                    
-                                    {% for referencia, items in referencias.items() %}
-                                        <!-- Encabezado de Referencia de Producto -->
-                                        <tr class="table-light">
-                                            <td colspan="6" class="fw-bold ps-5">
-                                                <i class="fas fa-box me-2"></i>{{ referencia }}
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Items agrupados por presentación -->
-                                        {% set items_by_presentation = {} %}
-                                        {% for item in items %}
-                                            {% set pres_key = item.presentacion or 'Sin Presentación' %}
-                                            {% if pres_key not in items_by_presentation %}
-                                                {% set _ = items_by_presentation.update({pres_key: []}) %}
-                                            {% endif %}
-                                            {% set _ = items_by_presentation[pres_key].append(item) %}
-                                        {% endfor %}
-                                        
-                                        {% for presentacion, pres_items in items_by_presentation.items() %}
-                                            <!-- Subtítulo de presentación -->
-                                            <tr class="table-warning">
-                                                <td colspan="6" class="fw-bold ps-6">
-                                                    <i class="fas fa-tag me-2"></i>{{ presentacion }}
-                                                </td>
-                                            </tr>
-                                            
-                                            <!-- Items de la presentación -->
-                                            {% for item in pres_items %}
-                                            <tr>
-                                                <td class="ps-6">{{ item.formulacion or '-' }}</td>
-                                                <td>{{ item.referencia or '-' }}</td>
-                                                <td>
-                                                    <span class="text-success">
-                                                        <i class="fas fa-tag me-1"></i>{{ item.presentacion or '-' }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ item.pedido_id }}</td>
-                                                <td class="text-end">{{ "%0.2f"|format(item.total_cantidad or 0) }}</td>
-                                                <td class="text-end">{{ "%0.2f"|format(item.total_peso or 0) }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                            
-                                            <!-- Subtotal por presentación -->
-                                            {% set subtotal_cantidad = pres_items | sum(attribute='total_cantidad') %}
-                                            {% set subtotal_peso = pres_items | sum(attribute='total_peso') %}
-                                            <tr class="table-info">
-                                                <td colspan="4" class="text-end fw-bold ps-6">
-                                                    <i class="fas fa-calculator me-1"></i>Subtotal {{ presentacion }}:
-                                                </td>
-                                                <td class="text-end fw-bold">{{ "%0.2f"|format(subtotal_cantidad) }}</td>
-                                                <td class="text-end fw-bold">{{ "%0.2f"|format(subtotal_peso) }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                        
-                                        <!-- Subtotal de Referencia -->
-                                        <tr class="table-success">
-                                            <td colspan="4" class="text-end fw-bold ps-5">
-                                                <i class="fas fa-box-open me-1"></i>Subtotal {{ referencia }}:
-                                            </td>
-                                            <td class="text-end fw-bold">
-                                                {{ "%0.2f"|format(subtotales_referencia[categoria + '|' + formulacion + '|' + referencia].cantidad) }}
-                                            </td>
-                                            <td class="text-end fw-bold">
-                                                {{ "%0.2f"|format(subtotales_referencia[categoria + '|' + formulacion + '|' + referencia].peso) }}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                    
-                                    <!-- Subtotal de Formulación -->
+                                {% endif %}
+                                
+                                <!-- Subtotal por Formulación (al final de cada grupo de formulación) -->
+                                {% if not next_producto or next_producto.categoria != producto.categoria or next_producto.formulacion != producto.formulacion %}
+                                    {% set form_key = producto.categoria + '|' + producto.formulacion %}
                                     <tr class="table-warning">
                                         <td colspan="4" class="text-end fw-bold ps-4">
-                                            <i class="fas fa-calculator me-1"></i>Subtotal {{ formulacion }}:
+                                            <i class="fas fa-calculator me-1"></i>Subtotal {{ producto.formulacion }}:
                                         </td>
-                                        <td class="text-end fw-bold">
-                                            {{ "%0.2f"|format(subtotales_formulacion[categoria + '|' + formulacion].cantidad) }}
-                                        </td>
-                                        <td class="text-end fw-bold">
-                                            {{ "%0.2f"|format(subtotales_formulacion[categoria + '|' + formulacion].peso) }}
-                                        </td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_formulacion[form_key].cantidad) }}</td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_formulacion[form_key].peso) }}</td>
                                     </tr>
-                                {% endfor %}
+                                {% endif %}
                                 
-                                <!-- Total de Categoría -->
-                                <tr class="table-secondary">
-                                    <td colspan="4" class="text-end fw-bold">
-                                        <i class="fas fa-list me-1"></i>Total {{ categoria }}:
-                                    </td>
-                                    <td class="text-end fw-bold">
-                                        {{ "%0.2f"|format(totales_categoria[categoria].cantidad) }}
-                                    </td>
-                                    <td class="text-end fw-bold">
-                                        {{ "%0.2f"|format(totales_categoria[categoria].peso) }}
-                                    </td>
-                                </tr>
+                                <!-- Subtotal por Categoría (al final de cada grupo de categoría) -->
+                                {% if not next_producto or next_producto.categoria != producto.categoria %}
+                                    <tr class="table-secondary">
+                                        <td colspan="4" class="text-end fw-bold">
+                                            <i class="fas fa-layer-group me-1"></i>Total {{ producto.categoria }}:
+                                        </td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_categoria[producto.categoria].cantidad) }}</td>
+                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_categoria[producto.categoria].peso) }}</td>
+                                    </tr>
+                                    <!-- Línea en blanco para separar categorías -->
+                                    <tr><td colspan="6">&nbsp;</td></tr>
+                                {% endif %}
                             {% endfor %}
                         {% else %}
                             <tr>

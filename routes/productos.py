@@ -4,6 +4,10 @@ from models import Producto
 from utils.helpers import get_current_year
 import pandas as pd
 from sqlalchemy import or_, and_
+import logging
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 productos_bp = Blueprint('productos', __name__, url_prefix='/productos')
 
@@ -213,6 +217,65 @@ def eliminar(producto_id):
         else:
             flash('Producto no encontrado.', 'danger')
         return redirect(url_for('productos.lista'))
+    finally:
+        db.close()
+
+@productos_bp.route('/eliminar-multiple', methods=['POST'])
+def eliminar_multiple():
+    """Eliminar múltiples productos"""
+    db = db_config.get_session()
+    try:
+        # Obtener los IDs de productos a eliminar desde el JSON
+        data = request.get_json()
+        if not data or 'ids' not in data:
+            return jsonify({'success': False, 'error': 'No se proporcionaron IDs de productos'})
+        
+        ids = data['ids']
+        if not isinstance(ids, list) or len(ids) == 0:
+            return jsonify({'success': False, 'error': 'Lista de IDs inválida'})
+        
+        # Validar que todos los IDs sean enteros
+        try:
+            ids = [int(id_str) for id_str in ids]
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'IDs de productos inválidos'})
+        
+        # Buscar productos existentes
+        productos = db.query(Producto).filter(Producto.id.in_(ids)).all()
+        productos_encontrados = len(productos)
+        
+        if productos_encontrados == 0:
+            return jsonify({'success': False, 'error': 'No se encontraron productos para eliminar'})
+        
+        # Obtener códigos de productos para el log
+        codigos_eliminados = [p.codigo for p in productos]
+        
+        # Eliminar productos
+        for producto in productos:
+            db.delete(producto)
+        
+        db.commit()
+        
+        # Mensaje de éxito
+        if productos_encontrados == len(ids):
+            mensaje = f'Se eliminaron {productos_encontrados} productos correctamente'
+        else:
+            mensaje = f'Se eliminaron {productos_encontrados} de {len(ids)} productos (algunos no se encontraron)'
+        
+        # Log de la acción (opcional)
+        logger.info(f"Eliminación múltiple de productos por usuario. IDs eliminados: {ids}, Códigos: {codigos_eliminados}")
+        
+        return jsonify({
+            'success': True, 
+            'message': mensaje,
+            'eliminados': productos_encontrados,
+            'codigos': codigos_eliminados
+        })
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error en eliminación múltiple de productos: {str(e)}")
+        return jsonify({'success': False, 'error': f'Error al eliminar productos: {str(e)}'})
     finally:
         db.close()
 
