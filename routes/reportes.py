@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, make_response, flash, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, case
 from config.database import db_config
 from models import Pedido, PedidoProducto, Producto, Cliente
 from datetime import datetime, date, timedelta
@@ -131,12 +131,12 @@ def consolidado_productos():
 
         # Query base para obtener items de pedidos con información de productos e incluir presentaciones
         # Agrupa directamente por producto y suma las cantidades
-        # Calcula el peso dinámicamente usando CASE WHEN para mayor compatibilidad
+        # Calcula el peso dinámicamente: usa peso_total_g_item si no es NULL, sino calcula cantidad * gramaje_g
         query = db.query(
             func.sum(PedidoProducto.cantidad).label('cantidad_total'),
             func.sum(
-                func.case(
-                    [(PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item)],
+                case(
+                    (PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item),
                     else_=PedidoProducto.cantidad * Producto.gramaje_g
                 )
             ).label('peso_total'),
@@ -489,12 +489,12 @@ def exportar_consolidado_excel():
 
         # Query base (misma lógica que en consolidado_productos)
         # Agrupa directamente por producto y suma las cantidades
-        # Calcula el peso dinámicamente usando CASE WHEN para mayor compatibilidad
+        # Calcula el peso dinámicamente: usa peso_total_g_item si no es NULL, sino calcula cantidad * gramaje_g
         query = db.query(
             func.sum(PedidoProducto.cantidad).label('cantidad_total'),
             func.sum(
-                func.case(
-                    [(PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item)],
+                case(
+                    (PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item),
                     else_=PedidoProducto.cantidad * Producto.gramaje_g
                 )
             ).label('peso_total'),
