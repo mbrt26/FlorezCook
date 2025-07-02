@@ -131,13 +131,13 @@ def consolidado_productos():
 
         # Query base para obtener items de pedidos con información de productos e incluir presentaciones
         # Agrupa directamente por producto y suma las cantidades
-        # Calcula el peso dinámicamente: usa peso_total_g_item si existe, sino calcula cantidad * gramaje_g
+        # Calcula el peso dinámicamente usando CASE WHEN para mayor compatibilidad
         query = db.query(
             func.sum(PedidoProducto.cantidad).label('cantidad_total'),
             func.sum(
-                func.coalesce(
-                    PedidoProducto.peso_total_g_item,
-                    PedidoProducto.cantidad * Producto.gramaje_g
+                func.case(
+                    [(PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item)],
+                    else_=PedidoProducto.cantidad * Producto.gramaje_g
                 )
             ).label('peso_total'),
             PedidoProducto.comentarios_item.label('presentacion'),
@@ -489,13 +489,13 @@ def exportar_consolidado_excel():
 
         # Query base (misma lógica que en consolidado_productos)
         # Agrupa directamente por producto y suma las cantidades
-        # Calcula el peso dinámicamente: usa peso_total_g_item si existe, sino calcula cantidad * gramaje_g
+        # Calcula el peso dinámicamente usando CASE WHEN para mayor compatibilidad
         query = db.query(
             func.sum(PedidoProducto.cantidad).label('cantidad_total'),
             func.sum(
-                func.coalesce(
-                    PedidoProducto.peso_total_g_item,
-                    PedidoProducto.cantidad * Producto.gramaje_g
+                func.case(
+                    [(PedidoProducto.peso_total_g_item.isnot(None), PedidoProducto.peso_total_g_item)],
+                    else_=PedidoProducto.cantidad * Producto.gramaje_g
                 )
             ).label('peso_total'),
             PedidoProducto.comentarios_item.label('presentacion'),
