@@ -232,7 +232,7 @@ def editar(pedido_id):
             return redirect(url_for('pedidos.lista'))
 
         productos = db.query(Producto).all()
-        estados = ['Pendiente', 'En Proceso', 'Completado', 'Cancelado', 'Entregado']
+        estados = ['En Proceso', 'Programado', 'Cancelado', 'Entregado']
         
         if request.method == 'POST':
             try:
