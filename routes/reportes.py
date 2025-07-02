@@ -119,8 +119,15 @@ def consolidado_productos():
         estado = request.args.get('estado', '')
         fecha_desde = request.args.get('fecha_desde', '')
         fecha_hasta = request.args.get('fecha_hasta', '')
+        
+        # Obtener parámetros de filtro
         categoria = request.args.get('categoria', '')
         formulacion = request.args.get('formulacion', '')
+        
+        # Si se pide reset o es primera carga, limpiar filtros
+        if request.args.get('reset') or not request.args:
+            categoria = ''
+            formulacion = ''
 
         # Query base para obtener items de pedidos con información de productos e incluir presentaciones
         # Agrupa directamente por producto y suma las cantidades

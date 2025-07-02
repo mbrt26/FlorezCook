@@ -47,7 +47,7 @@
                 <div class="col-md-3">
                     <label for="categoria" class="form-label">Categoría</label>
                     <select name="categoria" id="categoria" class="form-select">
-                        <option value="" {% if not filtros.categoria %}selected{% endif %}>Todas las categorías</option>
+                        <option value="" {% if filtros.categoria == '' %}selected{% endif %}>Todas las categorías</option>
                         {% for cat in categorias %}
                         <option value="{{ cat }}" {% if filtros.categoria == cat %}selected{% endif %}>
                             {{ cat }}
@@ -58,7 +58,7 @@
                 <div class="col-md-3">
                     <label for="formulacion" class="form-label">Formulación</label>
                     <select name="formulacion" id="formulacion" class="form-select">
-                        <option value="" {% if not filtros.formulacion %}selected{% endif %}>Todas las formulaciones</option>
+                        <option value="" {% if filtros.formulacion == '' %}selected{% endif %}>Todas las formulaciones</option>
                         {% for form in formulaciones %}
                         <option value="{{ form }}" {% if filtros.formulacion == form %}selected{% endif %}>
                             {{ form }}
@@ -70,7 +70,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-filter me-1"></i> Filtrar
                     </button>
-                    <a href="{{ url_for('reportes.consolidado_productos') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('reportes.consolidado_productos') }}?reset=1" class="btn btn-secondary">
                         <i class="fas fa-undo me-1"></i> Limpiar Filtros
                     </a>
                 </div>
@@ -188,4 +188,26 @@
         </div>
     </div>
 </div>
+
+<script>
+// Asegurar que por defecto estén seleccionadas las opciones "Todas"
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriaSelect = document.getElementById('categoria');
+    const formulacionSelect = document.getElementById('formulacion');
+    
+    // Verificar si la URL NO tiene parámetros de categoria o formulacion
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasCategoria = urlParams.has('categoria') && urlParams.get('categoria') !== '';
+    const hasFormulacion = urlParams.has('formulacion') && urlParams.get('formulacion') !== '';
+    
+    // Si accedemos directamente a la página SIN filtros específicos, forzar "Todas"
+    if (!hasCategoria && categoriaSelect) {
+        categoriaSelect.selectedIndex = 0; // Seleccionar "Todas las categorías"
+    }
+    
+    if (!hasFormulacion && formulacionSelect) {
+        formulacionSelect.selectedIndex = 0; // Seleccionar "Todas las formulaciones"
+    }
+});
+</script>
 {% endblock %}
