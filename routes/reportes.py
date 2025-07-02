@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, make_response, flash, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, case
+from sqlalchemy import func, desc
 from config.database import db_config
 from models import Pedido, PedidoProducto, Producto, Cliente
 from datetime import datetime, date, timedelta
