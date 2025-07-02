@@ -112,12 +112,8 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Cantidad</label>
-                            <select class="form-select cantidad-select" name="cantidad_{{ loop.index0 }}" required>
-                                <option value="">Seleccionar cantidad...</option>
-                                {% for num in range(1, 101) %}
-                                <option value="{{ num }}" {% if item.cantidad == num %}selected{% endif %}>{{ num }}</option>
-                                {% endfor %}
-                            </select>
+                            <input type="number" class="form-control cantidad-select" name="cantidad_{{ loop.index0 }}" 
+                                   min="1" step="1" value="{{ item.cantidad or '' }}" required>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Gramaje (g)</label>
@@ -179,12 +175,8 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Cantidad</label>
-                            <select class="form-select cantidad-select" name="cantidad_0" required>
-                                <option value="">Seleccionar cantidad...</option>
-                                {% for num in range(1, 101) %}
-                                <option value="{{ num }}">{{ num }}</option>
-                                {% endfor %}
-                            </select>
+                            <input type="number" class="form-control cantidad-select" name="cantidad_0" 
+                                   min="1" step="1" required>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Gramaje (g)</label>
@@ -342,12 +334,6 @@ $(document).ready(function() {
         const itemCount = $('.item-row').length;
         const newIndex = itemCount;
         
-        // Generar opciones de cantidad del 1 al 100
-        let cantidadOptions = '<option value="">Seleccionar cantidad...</option>';
-        for (let i = 1; i <= 100; i++) {
-            cantidadOptions += `<option value="${i}">${i}</option>`;
-        }
-        
         // Crear nueva fila (sin usar Jinja2 en JavaScript)
         const newRow = $(`
             <div class="row g-3 mb-3 item-row" data-index="${newIndex}">
@@ -359,9 +345,8 @@ $(document).ready(function() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Cantidad</label>
-                    <select class="form-select cantidad-select" name="cantidad_${newIndex}" required>
-                        ${cantidadOptions}
-                    </select>
+                    <input type="number" class="form-control cantidad-select" name="cantidad_${newIndex}" 
+                           min="1" step="1" required>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Gramaje (g)</label>
@@ -501,7 +486,7 @@ $(document).ready(function() {
         }
     });
     
-    // Cantidad change handler - actualizado para funcionar con select
+    // Cantidad change handler - funciona con input number
     $(document).on('change', '.cantidad-select', function() {
         const row = $(this).closest('.item-row');
         const cantidad = parseFloat($(this).val()) || 0;
