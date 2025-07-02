@@ -41,10 +41,34 @@ def api_buscar():
     """API para búsqueda de productos con autocompletado para pedidos"""
     db = db_config.get_session()
     try:
-        # Obtener término de búsqueda
+        # Obtener parámetros de búsqueda
         termino = request.args.get('q', '').strip()
+        producto_id = request.args.get('id', '').strip()
         limite = int(request.args.get('limit', 10))  # Limitar resultados para rendimiento
         
+        # Si se proporciona un ID específico, buscar por ID
+        if producto_id:
+            try:
+                producto = db.query(Producto).filter(Producto.id == int(producto_id)).first()
+                if producto:
+                    resultado = {
+                        'id': producto.id,
+                        'codigo': producto.codigo,
+                        'referencia': producto.referencia_de_producto,
+                        'display': f"{producto.codigo} - {producto.referencia_de_producto} - {producto.categoria_linea or 'Sin línea'}",
+                        'gramaje_g': producto.gramaje_g,
+                        'formulacion_grupo': producto.formulacion_grupo or '',
+                        'categoria_linea': producto.categoria_linea or '',
+                        'presentacion1': producto.presentacion1 or '',
+                        'presentacion2': producto.presentacion2 or ''
+                    }
+                    return jsonify([resultado])
+                else:
+                    return jsonify([])
+            except ValueError:
+                return jsonify([])
+        
+        # Búsqueda por término
         if len(termino) < 1:  # Mínimo 1 carácter para iniciar búsqueda
             return jsonify([])
         

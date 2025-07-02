@@ -47,7 +47,9 @@
                             <label for="despacho_tipo" class="form-label">Tipo de Despacho</label>
                             <select class="form-select" id="despacho_tipo" name="despacho_tipo">
                                 <option value="">Seleccione...</option>
-                                <option value="DOMICILIO" {% if pedido.despacho_tipo == 'DOMICILIO' %}selected{% endif %}>DOMICILIO</option>
+                                <option value="Domicilio" {% if pedido.despacho_tipo == 'Domicilio' %}selected{% endif %}>Domicilio</option>
+                                <option value="Recogida en tienda" {% if pedido.despacho_tipo == 'Recogida en tienda' %}selected{% endif %}>Recogida en tienda</option>
+                                <option value="Punto de venta" {% if pedido.despacho_tipo == 'Punto de venta' %}selected{% endif %}>Punto de venta</option>
                                 <option value="RECOGER EN PLANTA" {% if pedido.despacho_tipo == 'RECOGER EN PLANTA' %}selected{% endif %}>RECOGER EN PLANTA</option>
                                 <option value="FLOTA" {% if pedido.despacho_tipo == 'FLOTA' %}selected{% endif %}>FLOTA</option>
                             </select>
@@ -129,11 +131,19 @@
                                 {% if item.producto_id %}
                                     {% set producto = productos | selectattr('id', 'equalto', item.producto_id) | first %}
                                     {% if producto %}
+                                        <!-- Presentación 1 del producto -->
                                         {% if producto.presentacion1 %}
-                                            <option value="{{ producto.presentacion1 }}" {% if item.presentacion_item == producto.presentacion1 %}selected{% endif %}>{{ producto.presentacion1 }}</option>
+                                            <option value="{{ producto.presentacion1 }}" {% if item.comentarios_item == producto.presentacion1 %}selected{% endif %}>{{ producto.presentacion1 }}</option>
                                         {% endif %}
+                                        
+                                        <!-- Presentación 2 del producto -->
                                         {% if producto.presentacion2 %}
-                                            <option value="{{ producto.presentacion2 }}" {% if item.presentacion_item == producto.presentacion2 %}selected{% endif %}>{{ producto.presentacion2 }}</option>
+                                            <option value="{{ producto.presentacion2 }}" {% if item.comentarios_item == producto.presentacion2 %}selected{% endif %}>{{ producto.presentacion2 }}</option>
+                                        {% endif %}
+                                        
+                                        <!-- Si la presentación guardada no coincide con las del producto, mostrarla como personalizada -->
+                                        {% if item.comentarios_item and item.comentarios_item != producto.presentacion1 and item.comentarios_item != producto.presentacion2 %}
+                                            <option value="{{ item.comentarios_item }}" selected>{{ item.comentarios_item }}</option>
                                         {% endif %}
                                     {% endif %}
                                 {% endif %}
@@ -414,6 +424,7 @@ $(document).ready(function() {
                 $(this).find('[name^="fecha_de_entrega_item_"]').attr('name', `fecha_de_entrega_item_${newIndex}`);
                 $(this).find('[name^="estado_del_pedido_item_"]').attr('name', `estado_del_pedido_item_${newIndex}`);
                 $(this).find('[name^="comentarios_item_"]').attr('name', `comentarios_item_${newIndex}`);
+                $(this).find('[name^="presentacion_item_"]').attr('name', `presentacion_item_${newIndex}`);
             });
             
             // Disable remove button if only one row remains
@@ -428,6 +439,7 @@ $(document).ready(function() {
         const selectedOption = $(this).find('option:selected');
         const row = $(this).closest('.item-row');
         const cantidadSelect = row.find('.cantidad-select');
+        const presentacionSelect = row.find('.presentacion-select');
         
         if (selectedOption.val()) {
             const gramaje = parseFloat(selectedOption.data('gramaje')) || 0;
@@ -443,12 +455,49 @@ $(document).ready(function() {
             const cantidad = parseFloat(cantidadSelect.val()) || 0;
             const pesoTotal = cantidad * gramaje;
             row.find('.peso-total-input').val(pesoTotal.toFixed(2));
+            
+            // Cargar presentaciones dinámicamente
+            const productoId = selectedOption.val();
+            $.ajax({
+                url: '/productos/api/buscar',
+                type: 'GET',
+                data: { id: productoId },
+                success: function(data) {
+                    if (data && data.length > 0) {
+                        const producto = data[0];
+                        const presentacion1 = producto.presentacion1;
+                        const presentacion2 = producto.presentacion2;
+                        
+                        // Limpiar y llenar dropdown de presentaciones
+                        presentacionSelect.empty().append('<option value="">Seleccionar presentación</option>');
+                        
+                        if (presentacion1) {
+                            presentacionSelect.append(`<option value="${presentacion1}">${presentacion1}</option>`);
+                        }
+                        if (presentacion2) {
+                            presentacionSelect.append(`<option value="${presentacion2}">${presentacion2}</option>`);
+                        }
+                        
+                        // Si no hay presentaciones, mostrar mensaje
+                        if (!presentacion1 && !presentacion2) {
+                            presentacionSelect.append('<option value="" disabled>No hay presentaciones definidas</option>');
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar presentaciones:', error);
+                    presentacionSelect.empty().append('<option value="">Error al cargar presentaciones</option>');
+                }
+            });
         } else {
             // Clear fields when no product selected
             row.find('.gramaje-input').val('');
             row.find('.grupo-input').val('');
             row.find('.linea-input').val('');
             row.find('.peso-total-input').val('');
+            
+            // Limpiar presentaciones
+            presentacionSelect.empty().append('<option value="">Seleccionar presentación</option>');
         }
     });
     
