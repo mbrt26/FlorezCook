@@ -178,7 +178,6 @@ def consolidado_productos():
 
         # Agrupar productos consolidados y calcular subtotales jerárquicos
         productos_consolidados = []
-        subtotales_referencia = {}
         subtotales_formulacion = {}
         subtotales_categoria = {}
         total_cantidad = 0
@@ -202,13 +201,6 @@ def consolidado_productos():
             }
             
             productos_consolidados.append(producto_consolidado)
-            
-            # Calcular subtotales por referencia (categoria + formulacion + referencia)
-            ref_key = f"{categoria}|{formulacion}|{referencia}"
-            if ref_key not in subtotales_referencia:
-                subtotales_referencia[ref_key] = {'cantidad': 0, 'peso': 0}
-            subtotales_referencia[ref_key]['cantidad'] += cantidad
-            subtotales_referencia[ref_key]['peso'] += peso
             
             # Calcular subtotales por formulación (categoria + formulacion)
             form_key = f"{categoria}|{formulacion}"
@@ -260,7 +252,6 @@ def consolidado_productos():
 
         return render_template('consolidado_productos.html',
                              productos_consolidados=productos_consolidados,
-                             subtotales_referencia=subtotales_referencia,
                              subtotales_formulacion=subtotales_formulacion,
                              subtotales_categoria=subtotales_categoria,
                              total_cantidad=total_cantidad,
@@ -534,7 +525,6 @@ def exportar_consolidado_excel():
 
         # Procesar productos consolidados y calcular subtotales jerárquicos para Excel
         productos_consolidados = []
-        subtotales_referencia_excel = {}
         subtotales_formulacion_excel = {}
         subtotales_categoria_excel = {}
         total_cantidad = 0
@@ -558,13 +548,6 @@ def exportar_consolidado_excel():
             }
             
             productos_consolidados.append(producto_consolidado)
-            
-            # Calcular subtotales por referencia
-            ref_key = f"{categoria}|{formulacion}|{referencia}"
-            if ref_key not in subtotales_referencia_excel:
-                subtotales_referencia_excel[ref_key] = {'cantidad': 0, 'peso': 0}
-            subtotales_referencia_excel[ref_key]['cantidad'] += cantidad
-            subtotales_referencia_excel[ref_key]['peso'] += peso
             
             # Calcular subtotales por formulación
             form_key = f"{categoria}|{formulacion}"
@@ -655,28 +638,6 @@ def exportar_consolidado_excel():
                 
                 # Verificar si es el último producto del grupo para mostrar subtotales
                 next_producto = productos_consolidados[i + 1] if i + 1 < len(productos_consolidados) else None
-                
-                # Subtotal por Referencia
-                if not next_producto or next_producto['categoria'] != producto['categoria'] or next_producto['formulacion'] != producto['formulacion'] or next_producto['referencia'] != producto['referencia']:
-                    ref_key = f"{producto['categoria']}|{producto['formulacion']}|{producto['referencia']}"
-                    
-                    cell = ws.cell(row=row, column=4, value=f"📦 Subtotal {producto['referencia']}:")
-                    cell.font = Font(bold=True, color="000000")
-                    cell.fill = PatternFill(start_color="D4F1D4", end_color="D4F1D4", fill_type="solid")
-                    cell.alignment = right_alignment
-                    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
-                    
-                    cantidad_cell = ws.cell(row=row, column=5, value=round(subtotales_referencia_excel[ref_key]['cantidad'], 2))
-                    cantidad_cell.font = Font(bold=True, color="000000")
-                    cantidad_cell.fill = PatternFill(start_color="D4F1D4", end_color="D4F1D4", fill_type="solid")
-                    cantidad_cell.alignment = right_alignment
-                    
-                    peso_cell = ws.cell(row=row, column=6, value=round(subtotales_referencia_excel[ref_key]['peso'], 2))
-                    peso_cell.font = Font(bold=True, color="000000")
-                    peso_cell.fill = PatternFill(start_color="D4F1D4", end_color="D4F1D4", fill_type="solid")
-                    peso_cell.alignment = right_alignment
-                    
-                    row += 1
                 
                 # Subtotal por Formulación
                 if not next_producto or next_producto['categoria'] != producto['categoria'] or next_producto['formulacion'] != producto['formulacion']:

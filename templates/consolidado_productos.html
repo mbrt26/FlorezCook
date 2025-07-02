@@ -130,20 +130,8 @@
                                     <td class="text-end">{{ "%0.2f"|format(producto.total_peso) }}</td>
                                 </tr>
                                 
-                                <!-- Subtotal por Referencia (al final de cada grupo de referencia) -->
-                                {% set next_producto = productos_consolidados[loop.index0 + 1] if loop.index0 + 1 < productos_consolidados|length else none %}
-                                {% if not next_producto or next_producto.categoria != producto.categoria or next_producto.formulacion != producto.formulacion or next_producto.referencia != producto.referencia %}
-                                    {% set ref_key = producto.categoria + '|' + producto.formulacion + '|' + producto.referencia %}
-                                    <tr class="table-success">
-                                        <td colspan="4" class="text-end fw-bold ps-6">
-                                            <i class="fas fa-calculator me-1"></i>Subtotal {{ producto.referencia }}:
-                                        </td>
-                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_referencia[ref_key].cantidad) }}</td>
-                                        <td class="text-end fw-bold">{{ "%0.2f"|format(subtotales_referencia[ref_key].peso) }}</td>
-                                    </tr>
-                                {% endif %}
-                                
                                 <!-- Subtotal por Formulación (al final de cada grupo de formulación) -->
+                                {% set next_producto = productos_consolidados[loop.index0 + 1] if loop.index0 + 1 < productos_consolidados|length else none %}
                                 {% if not next_producto or next_producto.categoria != producto.categoria or next_producto.formulacion != producto.formulacion %}
                                     {% set form_key = producto.categoria + '|' + producto.formulacion %}
                                     <tr class="table-warning">
