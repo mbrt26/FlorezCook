@@ -223,21 +223,22 @@ def consolidado_productos():
         # Ordenar productos por categoría, formulación, referencia, presentación
         productos_consolidados.sort(key=lambda x: (x['categoria'], x['formulacion'], x['referencia'], x['presentacion']))
 
-        # Obtener datos para filtros
+        # Obtener datos para filtros (independientes de los filtros aplicados)
         estados = db.query(Pedido.estado_pedido_general).distinct().filter(
             Pedido.estado_pedido_general.isnot(None)
         ).all()
         estados = [e[0] for e in estados if e[0]]
 
+        # Obtener todas las categorías y formulaciones disponibles sin filtros
         categorias = db.query(Producto.categoria_linea).distinct().filter(
             Producto.categoria_linea.isnot(None)
         ).all()
-        categorias = [c[0] for c in categorias if c[0]]
+        categorias = sorted([c[0] for c in categorias if c[0]])
 
         formulaciones = db.query(Producto.formulacion_grupo).distinct().filter(
             Producto.formulacion_grupo.isnot(None)
         ).all()
-        formulaciones = [f[0] for f in formulaciones if f[0]]
+        formulaciones = sorted([f[0] for f in formulaciones if f[0]])
 
         # Crear objeto de filtros para pasar a la plantilla
         filtros = {

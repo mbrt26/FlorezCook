@@ -6,9 +6,12 @@
 <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-chart-pie me-2"></i>Consolidado de Productos</h2>
-        <div>
+        <div class="btn-group">
             <a href="{{ url_for('reportes.exportar_consolidado_excel', **filtros) }}" class="btn btn-success">
-                <i class="fas fa-file-excel me-1"></i> Exportar a Excel
+                <i class="fas fa-file-excel me-1"></i> Exportar Filtrado
+            </a>
+            <a href="{{ url_for('reportes.exportar_consolidado_excel', estado=filtros.estado, fecha_desde=filtros.fecha_desde, fecha_hasta=filtros.fecha_hasta) }}" class="btn btn-outline-success">
+                <i class="fas fa-download me-1"></i> Exportar Todo
             </a>
         </div>
     </div>
@@ -44,7 +47,7 @@
                 <div class="col-md-3">
                     <label for="categoria" class="form-label">Categoría</label>
                     <select name="categoria" id="categoria" class="form-select">
-                        <option value="">Todas las categorías</option>
+                        <option value="" {% if not filtros.categoria %}selected{% endif %}>Todas las categorías</option>
                         {% for cat in categorias %}
                         <option value="{{ cat }}" {% if filtros.categoria == cat %}selected{% endif %}>
                             {{ cat }}
@@ -55,7 +58,7 @@
                 <div class="col-md-3">
                     <label for="formulacion" class="form-label">Formulación</label>
                     <select name="formulacion" id="formulacion" class="form-select">
-                        <option value="">Todas las formulaciones</option>
+                        <option value="" {% if not filtros.formulacion %}selected{% endif %}>Todas las formulaciones</option>
                         {% for form in formulaciones %}
                         <option value="{{ form }}" {% if filtros.formulacion == form %}selected{% endif %}>
                             {{ form }}
