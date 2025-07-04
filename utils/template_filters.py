@@ -14,6 +14,13 @@ def utc_to_colombia(utc_dt):
         utc_dt = pytz.UTC.localize(utc_dt)
     return utc_dt.astimezone(colombia_tz)
 
+def strftime(value, format='%d/%m/%Y %H:%M'):
+    """Formatear fecha con strftime"""
+    if value is None:
+        return ''
+    return value.strftime(format)
+
 def register_template_filters(app):
     """Registrar filtros personalizados en la aplicación Flask"""
     app.jinja_env.filters['utc_to_colombia'] = utc_to_colombia
+    app.jinja_env.filters['strftime'] = strftime
