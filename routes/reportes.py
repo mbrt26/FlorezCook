@@ -8,6 +8,8 @@ from datetime import datetime, date, timedelta
 import io
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
+import pytz
+from utils.template_filters import utc_to_colombia
 
 reportes_bp = Blueprint('reportes', __name__, url_prefix='/reportes')
 
@@ -372,7 +374,7 @@ def exportar_pedidos_excel():
                 
                 for pedido in pedidos_cliente:
                     # Nivel 2: Productos del Pedido dentro de Cliente (azul claro)
-                    pedido_info = f"📦 Pedido #{pedido.id} - {pedido.fecha_creacion.strftime('%d/%m/%Y')} - Estado: {pedido.estado_pedido_general}"
+                    pedido_info = f"📦 Pedido #{pedido.id} - {utc_to_colombia(pedido.fecha_creacion).strftime('%d/%m/%Y')} - Estado: {pedido.estado_pedido_general}"
                     pedido_cell = ws.cell(row=row, column=1, value=pedido_info)
                     pedido_cell.font = pedido_font
                     pedido_cell.fill = pedido_fill
@@ -460,7 +462,8 @@ def exportar_pedidos_excel():
 
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        response.headers['Content-Disposition'] = f'attachment; filename=reporte_pedidos_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        colombia_now = utc_to_colombia(datetime.utcnow())
+        response.headers['Content-Disposition'] = f'attachment; filename=reporte_pedidos_{colombia_now.strftime("%Y%m%d_%H%M%S")}.xlsx'
         
         return response
 

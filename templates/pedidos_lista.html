@@ -131,8 +131,8 @@
                                         <span class="fw-bold text-primary">#{{ pedido.id }}</span>
                                     </td>
                                     <td class="align-middle">
-                                        <small class="text-muted">{{ pedido.fecha_creacion.strftime('%d/%m/%Y') }}</small><br>
-                                        <small class="text-muted">{{ pedido.fecha_creacion.strftime('%H:%M') }}</small>
+                                        <small class="text-muted">{{ pedido.fecha_creacion|utc_to_colombia|strftime('%d/%m/%Y') }}</small><br>
+                                        <small class="text-muted">{{ pedido.fecha_creacion|utc_to_colombia|strftime('%H:%M') }}</small>
                                     </td>
                                     <td class="align-middle">
                                         <div class="d-flex align-items-center">
@@ -199,7 +199,7 @@
                             <div>
                                 <h6 class="mb-0 fw-bold text-primary">#{{ pedido.id }}</h6>
                                 <small class="text-muted">
-                                    {{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                                    {{ pedido.fecha_creacion|utc_to_colombia|strftime('%d/%m/%Y %H:%M') }}
                                 </small>
                             </div>
                         </div>

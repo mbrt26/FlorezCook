@@ -11,3 +11,4 @@ cryptography>=3.4.0
 cloud-sql-python-connector>=1.0.0
 SQLAlchemy-Utils>=0.37.0
 flask-login==0.6.3
+pytz>=2023.3

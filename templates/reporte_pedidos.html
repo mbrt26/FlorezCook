@@ -80,7 +80,7 @@
                         {% for pedido in pedidos %}
                         <tr>
                             <td>{{ pedido.id }}</td>
-                            <td>{{ pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ pedido.fecha_creacion|utc_to_colombia|strftime('%d/%m/%Y %H:%M') }}</td>
                             <td>{{ pedido.cliente_asociado.nombre_comercial if pedido.cliente_asociado else pedido.nombre_cliente_ingresado or 'N/A' }}</td>
                             <td>{{ pedido.cliente_asociado.numero_identificacion if pedido.cliente_asociado else pedido.numero_identificacion_cliente_ingresado or 'N/A' }}</td>
                             <td>{{ pedido.items|length }} producto(s)</td>

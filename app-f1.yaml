@@ -1,0 +1,100 @@
+runtime: python311
+service: florezcook
+instance_class: F1
+automatic_scaling:
+  min_instances: 0  # Sin instancias mínimas - ahorro significativo
+  max_instances: 10
+  min_idle_instances: 0  # Escala a 0 cuando no hay tráfico
+  max_idle_instances: 1  # Máximo 1 inactiva para respuesta rápida
+  min_pending_latency: 2s  # Un poco más de latencia aceptable
+  max_pending_latency: 10s  # Más tolerancia antes de escalar
+  target_cpu_utilization: 0.8  # Más uso de CPU antes de escalar
+  target_throughput_utilization: 0.8
+
+env_variables:
+  ENV: production
+  DB_USER: florezcook_app
+  DB_PASS: Catalina18
+  DB_NAME: florezcook_db
+  CLOUD_SQL_CONNECTION_NAME: appsindunnova:southamerica-east1:florezcook-instance
+  FLASK_ENV: production
+  PYTHONUNBUFFERED: '1'
+  LOG_LEVEL: ERROR  # Menos logs = menos costos
+  SECRET_KEY: florezcook-production-secret-key-2025-v4-stable
+  PYTHONDONTWRITEBYTECODE: '1'
+  # Optimizaciones para F1 (menos memoria)
+  MYSQL_POOL_SIZE: '3'  # Menos conexiones
+  MYSQL_MAX_OVERFLOW: '5'
+  MYSQL_POOL_TIMEOUT: '20'
+  MYSQL_POOL_RECYCLE: '1800'  # Reciclar más rápido
+
+handlers:
+# Archivos estáticos con cache agresivo para reducir requests
+- url: /static/css/(.*)
+  static_files: static/css/\1
+  upload: static/css/.*
+  expiration: 7d  # Cache más largo
+  http_headers:
+    Cache-Control: public, max-age=604800
+
+- url: /static/js/(.*)
+  static_files: static/js/\1
+  upload: static/js/.*
+  expiration: 7d
+  http_headers:
+    Cache-Control: public, max-age=604800
+
+- url: /static/images/(.*)
+  static_files: static/images/\1
+  upload: static/images/.*
+  expiration: 30d  # Cache muy largo para imágenes
+  http_headers:
+    Cache-Control: public, max-age=2592000
+
+- url: /static/(.*)
+  static_files: static/\1
+  upload: static/.*
+  expiration: 1d
+
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+  expiration: 30d
+
+# Rutas API
+- url: /api/.*
+  script: auto
+  secure: always
+
+# Health check
+- url: /health
+  script: auto
+  secure: optional
+
+# Todas las demás rutas
+- url: /.*
+  script: auto
+  secure: always
+
+# Configuración de red y salud
+network:
+  instance_tag: florezcook-unified
+
+health_check:
+  enable_health_check: true
+  check_interval_sec: 60  # Menos frecuente para F1
+  timeout_sec: 10
+  unhealthy_threshold: 3
+  healthy_threshold: 2
+  restart_threshold: 120
+
+# Cloud SQL
+beta_settings:
+  cloud_sql_instances: appsindunnova:southamerica-east1:florezcook-instance
+
+# Configuración de warmup para arranque más rápido
+inbound_services:
+- warmup
+
+# Timeouts optimizados para F1
+entrypoint: gunicorn -b :$PORT main:app --workers 1 --threads 2 --timeout 30

@@ -464,7 +464,7 @@ $(document).ready(function() {
         let sumados = 0;
         while (sumados < dias) {
             resultado.setDate(resultado.getDate() + 1);
-            if (resultado.getDay() !== 0 && resultado.getDay() !== 6) {
+            if (resultado.getDay() !== 0) {
                 sumados++;
             }
         }

@@ -648,8 +648,8 @@ def calcular_fecha_minima_entrega(fecha_base=None):
     
     while dias_sumados < 2:
         fecha_resultado += timedelta(days=1)
-        # Solo contar días de lunes a viernes (0=lunes, 6=domingo)
-        if fecha_resultado.weekday() < 5:  # 0-4 son días laborables
+        # Solo contar días de lunes a sábado (0=lunes, 6=domingo)
+        if fecha_resultado.weekday() < 6:  # 0-5 son días laborables (lunes a sábado)
             dias_sumados += 1
     
     return fecha_resultado
