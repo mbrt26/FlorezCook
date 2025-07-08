@@ -42,11 +42,13 @@ def form():
 
         # Detectar si estamos en el portal de clientes - MEJORADO
         # Múltiples métodos de detección para mayor robustez
+        host = request.headers.get('Host', request.host)
         is_cliente_portal = (
             (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) or
             (current_app.config.get('IS_CLIENTE_PORTAL', False)) or
-            ('cliente' in request.host.lower()) or  # Detectar por hostname
-            (request.headers.get('Host', '').startswith('cliente-dot-'))  # Detectar por header Host
+            ('cliente' in host.lower()) or  # Detectar por hostname
+            (host.startswith('cliente-dot-')) or  # Detectar por header Host
+            ('cliente' in request.url.lower())  # Detectar por URL también
         )
         template_name = 'pedido_form_cliente.html' if is_cliente_portal else 'pedido_form.html'
         
