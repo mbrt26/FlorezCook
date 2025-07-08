@@ -1,0 +1,239 @@
+{% extends 'base_cliente.html' %}
+{% block title %}{{ 'Agregar' if modo == 'agregar' else 'Editar' }} Cliente | FlorezCook Portal de Clientes{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="fas fa-user me-2"></i>{{ 'Editar' if modo == 'editar' else 'Agregar' }} Cliente</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <!-- Hidden fields for redirection and NIT -->
+            <input type="hidden" name="redirect_to" value="{{ redirect_to if redirect_to else '' }}">
+            <input type="hidden" name="nit" value="{{ nit_default if nit_default else '' }}">
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Nombre Comercial</label>
+                    <input type="text" class="form-control" name="nombre_comercial" value="{{ cliente.nombre_comercial if cliente else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Razón Social</label>
+                    <input type="text" class="form-control" name="razon_social" value="{{ cliente.razon_social if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Tipo de Identificación</label>
+                    <select class="form-select" name="tipo_identificacion" required>
+                        <option value="">Seleccione...</option>
+                        <option value="NIT" {{ 'selected' if cliente and cliente.tipo_identificacion == 'NIT' else '' }}>NIT</option>
+                        <option value="Cedula Ciudadania" {{ 'selected' if cliente and cliente.tipo_identificacion == 'Cedula Ciudadania' else '' }}>Cédula Ciudadanía</option>
+                        <option value="Cedula Extranjería" {{ 'selected' if cliente and cliente.tipo_identificacion == 'Cedula Extranjería' else '' }}>Cédula Extranjería</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Número de Identificación</label>
+                    <input type="text" class="form-control" name="numero_identificacion" value="{{ cliente.numero_identificacion if cliente else nit_default if nit_default else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{ cliente.email if cliente else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Teléfono</label>
+                    <input type="text" class="form-control" name="telefono" value="{{ cliente.telefono if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label campo-requerido">Dirección</label>
+                    <input type="text" class="form-control" name="direccion" value="{{ cliente.direccion if cliente else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Departamento</label>
+                    <select class="form-select" name="departamento" id="departamento" required onchange="actualizarCiudades()">
+                        <option value="">Seleccione un departamento...</option>
+                        {% for departamento in departamentos_ciudades.keys() | sort %}
+                            <option value="{{ departamento }}" {{ 'selected' if cliente and cliente.departamento == departamento else '' }}>
+                                {{ departamento }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label campo-requerido">Ciudad</label>
+                    <div class="position-relative">
+                        <input type="text" 
+                               class="form-control" 
+                               name="ciudad" 
+                               id="ciudad-input" 
+                               value="{{ cliente.ciudad if cliente else '' }}" 
+                               placeholder="Seleccione o digite su ciudad..."
+                               required
+                               autocomplete="off"
+                               oninput="filtrarCiudades()"
+                               onfocus="mostrarListaCiudades()"
+                               onblur="ocultarListaCiudades()">
+                        <div id="lista-ciudades" class="dropdown-menu position-absolute w-100" style="display: none; max-height: 200px; overflow-y: auto; z-index: 1000;">
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">Puede seleccionar de la lista o escribir el nombre de su ciudad</small>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Guardar
+                </button>
+                <a href="/pedidos/form" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Datos de departamentos y ciudades
+const departamentosCiudades = {{ departamentos_ciudades | tojson }};
+let ciudadesActuales = [];
+let timeoutOcultar = null;
+
+function actualizarCiudades() {
+    const departamentoSelect = document.getElementById('departamento');
+    const ciudadInput = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    const departamentoSeleccionado = departamentoSelect.value;
+    
+    // Limpiar el input de ciudad
+    ciudadInput.value = '';
+    listaCiudades.innerHTML = '';
+    listaCiudades.style.display = 'none';
+    
+    if (departamentoSeleccionado && departamentosCiudades[departamentoSeleccionado]) {
+        ciudadesActuales = departamentosCiudades[departamentoSeleccionado];
+        ciudadInput.placeholder = 'Seleccione o digite su ciudad...';
+        ciudadInput.disabled = false;
+    } else {
+        ciudadesActuales = [];
+        ciudadInput.placeholder = 'Seleccione primero un departamento...';
+        ciudadInput.disabled = true;
+    }
+}
+
+function filtrarCiudades() {
+    const input = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    const valorInput = input.value.toLowerCase();
+    
+    if (ciudadesActuales.length === 0) {
+        listaCiudades.style.display = 'none';
+        return;
+    }
+    
+    // Filtrar ciudades que coincidan con el texto ingresado
+    const ciudadesFiltradas = ciudadesActuales.filter(ciudad => 
+        ciudad.toLowerCase().includes(valorInput)
+    );
+    
+    // Mostrar lista solo si hay texto y coincidencias
+    if (valorInput.length > 0 && ciudadesFiltradas.length > 0) {
+        mostrarListaCiudadesFiltradas(ciudadesFiltradas);
+    } else if (valorInput.length === 0) {
+        mostrarListaCiudadesFiltradas(ciudadesActuales);
+    } else {
+        listaCiudades.style.display = 'none';
+    }
+}
+
+function mostrarListaCiudadesFiltradas(ciudades) {
+    const listaCiudades = document.getElementById('lista-ciudades');
+    listaCiudades.innerHTML = '';
+    
+    ciudades.forEach(function(ciudad) {
+        const item = document.createElement('a');
+        item.className = 'dropdown-item';
+        item.href = '#';
+        item.textContent = ciudad;
+        item.onclick = function(e) {
+            e.preventDefault();
+            seleccionarCiudad(ciudad);
+        };
+        item.onmousedown = function(e) {
+            e.preventDefault(); // Prevenir que se active onblur antes que onclick
+        };
+        listaCiudades.appendChild(item);
+    });
+    
+    listaCiudades.style.display = 'block';
+}
+
+function mostrarListaCiudades() {
+    if (timeoutOcultar) {
+        clearTimeout(timeoutOcultar);
+        timeoutOcultar = null;
+    }
+    
+    if (ciudadesActuales.length > 0) {
+        const input = document.getElementById('ciudad-input');
+        if (input.value.length === 0) {
+            mostrarListaCiudadesFiltradas(ciudadesActuales);
+        } else {
+            filtrarCiudades();
+        }
+    }
+}
+
+function ocultarListaCiudades() {
+    timeoutOcultar = setTimeout(function() {
+        const listaCiudades = document.getElementById('lista-ciudades');
+        listaCiudades.style.display = 'none';
+    }, 200); // Pequeño retraso para permitir clicks en la lista
+}
+
+function seleccionarCiudad(ciudad) {
+    const ciudadInput = document.getElementById('ciudad-input');
+    const listaCiudades = document.getElementById('lista-ciudades');
+    
+    ciudadInput.value = ciudad;
+    listaCiudades.style.display = 'none';
+}
+
+// Inicializar ciudades si hay un departamento seleccionado al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const departamentoSelect = document.getElementById('departamento');
+    if (departamentoSelect.value) {
+        actualizarCiudades();
+        // Si estamos editando, mantener la ciudad seleccionada
+        {% if cliente and cliente.ciudad %}
+            document.getElementById('ciudad-input').value = '{{ cliente.ciudad }}';
+        {% endif %}
+    }
+});
+</script>
+
+<style>
+.dropdown-menu {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+    padding: 0.375rem 0.75rem;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #e9ecef;
+}
+
+#ciudad-input:focus + #lista-ciudades {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+</style>
+{% endblock %}

@@ -83,7 +83,10 @@ def agregar():
             # Validación básica
             if not all([nombre, razon, tipo, numero, email, telefono, direccion, ciudad, departamento]):
                 flash('Todos los campos son requeridos.', 'danger')
-                return render_template('cliente_form.html', 
+                # Detectar template correcto
+                from flask import g
+                template_name = 'cliente_form_cliente.html' if (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) else 'cliente_form.html'
+                return render_template(template_name, 
                                     current_year=current_year, 
                                     modo='agregar',
                                     nit_default=nit, 
@@ -94,7 +97,10 @@ def agregar():
             cliente_existente = db.query(Cliente).filter(Cliente.numero_identificacion == numero).first()
             if cliente_existente:
                 flash(f'Ya existe un cliente registrado con el número de identificación {numero}. Por favor verifique el número o busque el cliente existente.', 'warning')
-                return render_template('cliente_form.html', 
+                # Detectar template correcto
+                from flask import g
+                template_name = 'cliente_form_cliente.html' if (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) else 'cliente_form.html'
+                return render_template(template_name, 
                                     current_year=current_year, 
                                     modo='agregar',
                                     nit_default=nit, 
@@ -138,8 +144,12 @@ def agregar():
                 db.rollback()
                 flash('Ocurrió un error inesperado. Por favor intente nuevamente.', 'danger')
                 
+        # Detectar si estamos en el portal cliente para usar template correcto
+        from flask import g
+        template_name = 'cliente_form_cliente.html' if (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) else 'cliente_form.html'
+        
         # Renderizar el formulario (GET o si hay error en POST)
-        return render_template('cliente_form.html', 
+        return render_template(template_name, 
                              current_year=current_year, 
                              modo='agregar',
                              nit_default=nit, 
