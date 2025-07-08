@@ -642,9 +642,6 @@ $(document).ready(function() {
         ponerFechaEntregaAutomatica(idx);
     });
 
-    // TEST DEBUG INMEDIATO
-    alert('🚀 JavaScript cargado correctamente!');
-    
     // VALIDACIÓN OPTIMIZADA PARA EL PORTAL DE CLIENTES
     $('#pedidoForm').attr('novalidate', 'novalidate');
     
@@ -657,25 +654,10 @@ $(document).ready(function() {
         // Validación básica
         let errores = [];
         
-        // Verificar productos con debug para móvil
-        const productosHidden = $('.producto-id-hidden');
+        // Verificar productos - versión corregida
         const productosConValor = $('.producto-id-hidden').filter(function() {
-            return $(this).val() !== '';
+            return $(this).val() !== '' && $(this).val() !== '0';
         });
-        
-        // Debug visible para móvil - SIEMPRE mostrar
-        let debugInfo = `🔍 DEBUG PRODUCTOS:\n`;
-        debugInfo += `- Total campos: ${productosHidden.length}\n`;
-        debugInfo += `- Con valor: ${productosConValor.length}\n`;
-        
-        productosHidden.each(function(index) {
-            const name = $(this).attr('name') || 'sin-name';
-            const value = $(this).val() || 'vacío';
-            debugInfo += `- Campo ${index}: ${name} = ${value}\n`;
-        });
-        
-        // SIEMPRE mostrar debug al enviar
-        alert(debugInfo);
         
         if (productosConValor.length === 0) {
             errores.push('Debe agregar al menos un producto');

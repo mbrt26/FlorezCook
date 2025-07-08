@@ -40,18 +40,18 @@ def form():
                     'show_welcome_message': show_welcome
                 }
 
-        # TEMPORAL: Forzar template cliente para debug
+        # Detectar si estamos en el portal de clientes
         host = request.headers.get('Host', request.host)
         url_full = request.url.lower()
         
-        # Detectar si estamos en el portal de clientes - FORZADO
         is_cliente_portal = (
             'cliente' in host.lower() or
             'cliente' in url_full or
             host.startswith('cliente-dot-') or
-            True  # TEMPORAL: Forzar siempre cliente para debug
+            (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) or
+            (current_app.config.get('IS_CLIENTE_PORTAL', False))
         )
-        template_name = 'pedido_form_cliente.html'  # FORZADO para debug
+        template_name = 'pedido_form_cliente.html' if is_cliente_portal else 'pedido_form.html'
         
         # Log para debugging (TEMPORAL: forzado para diagnosticar)
         logger.warning(f"🔍 PEDIDOS TEMPLATE DEBUG - is_cliente_portal: {is_cliente_portal}, template: {template_name}, host: {request.host}, g: {hasattr(g, 'is_cliente_portal')}, config: {current_app.config.get('IS_CLIENTE_PORTAL', False)}")
