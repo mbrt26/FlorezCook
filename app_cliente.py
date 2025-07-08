@@ -151,18 +151,27 @@ def create_cliente_app():
         # TEMPORAL: Siempre loggear para diagnosticar el problema
         logger.warning(f"🎯 CLIENTE PORTAL DEBUG - Ruta: {request.path}, g.is_cliente_portal: {g.is_cliente_portal}, ENV: {os.getenv('ENV')}")
     
-    # TEMPORAL: Ruta directa para agregar clientes (bypass blueprint)
-    @app.route('/clientes/agregar', methods=['GET', 'POST'])
-    def agregar_cliente_directo():
-        """Agregar cliente directamente (bypass blueprint)"""
-        logger.warning("🔍 RUTA DIRECTA AGREGAR CLIENTE - Ejecutando...")
+    # TEMPORAL: Ruta de prueba para agregar clientes
+    @app.route('/cliente/nuevo', methods=['GET', 'POST'])
+    def nuevo_cliente():
+        """Agregar cliente - ruta alternativa"""
+        logger.warning("🔍 NUEVA RUTA CLIENTE - Ejecutando...")
         try:
+            from flask import request, redirect
             from routes.clientes import agregar
+            
+            # Redirigir parámetros de la URL original
+            nit = request.args.get('nit', '')
+            redirect_to = request.args.get('redirect_to', '')
+            
+            logger.warning(f"🔍 NUEVA RUTA CLIENTE - NIT: {nit}, Redirect: {redirect_to}")
+            
+            # Llamar la función original
             result = agregar()
-            logger.warning(f"🔍 RUTA DIRECTA AGREGAR CLIENTE - Resultado: {type(result)}")
+            logger.warning(f"🔍 NUEVA RUTA CLIENTE - Resultado: {type(result)}")
             return result
         except Exception as e:
-            logger.warning(f"🔍 RUTA DIRECTA AGREGAR CLIENTE - Error: {e}")
+            logger.warning(f"🔍 NUEVA RUTA CLIENTE - Error: {e}")
             return f"Error: {e}", 500
     
     # Página principal del portal de clientes

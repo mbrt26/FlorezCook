@@ -395,7 +395,7 @@ $(document).ready(function() {
                 } else {
                     // Cliente no encontrado: redirigir a la página de creación de cliente
                     console.log('🔍 Cliente no encontrado, redirigiendo...');
-                    window.location.href = `/clientes/agregar?nit=${encodeURIComponent(nit)}&redirect_to=/pedidos/form`;
+                    window.location.href = `/cliente/nuevo?nit=${encodeURIComponent(nit)}&redirect_to=/pedidos/form`;
                 }
             }).always(function() {
                 // Restaurar botón
