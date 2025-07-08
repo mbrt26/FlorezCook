@@ -654,9 +654,21 @@ $(document).ready(function() {
         // Validación básica
         let errores = [];
         
-        // Verificar productos
-        const productos = $('.producto-id-hidden[value!=""]').length;
-        if (productos === 0) {
+        // Verificar productos con debug mejorado
+        const productosHidden = $('.producto-id-hidden');
+        const productosConValor = $('.producto-id-hidden').filter(function() {
+            return $(this).val() !== '';
+        });
+        
+        console.log('🔍 DEBUG PRODUCTOS:');
+        console.log('- Total campos producto-id-hidden:', productosHidden.length);
+        console.log('- Campos con valor:', productosConValor.length);
+        
+        productosHidden.each(function(index) {
+            console.log(`- Campo ${index}:`, $(this).attr('name'), '=', $(this).val());
+        });
+        
+        if (productosConValor.length === 0) {
             errores.push('Debe agregar al menos un producto');
         }
         
