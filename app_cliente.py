@@ -151,6 +151,13 @@ def create_cliente_app():
         # TEMPORAL: Siempre loggear para diagnosticar el problema
         logger.warning(f"🎯 CLIENTE PORTAL DEBUG - Ruta: {request.path}, g.is_cliente_portal: {g.is_cliente_portal}, ENV: {os.getenv('ENV')}")
     
+    # TEMPORAL: Ruta directa para agregar clientes (bypass blueprint)
+    @app.route('/clientes/agregar', methods=['GET', 'POST'])
+    def agregar_cliente_directo():
+        """Agregar cliente directamente (bypass blueprint)"""
+        from routes.clientes import agregar
+        return agregar()
+    
     # Página principal del portal de clientes
     @app.route('/')
     def portal_cliente():
