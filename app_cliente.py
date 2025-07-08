@@ -82,12 +82,13 @@ def create_cliente_app():
     try:
         # Solo importar las rutas que necesitan los clientes
         from routes.pedidos import pedidos_bp
-        from routes.clientes import api_clientes_bp  # Solo la API para buscar clientes
+        from routes.clientes import api_clientes_bp, clientes_bp  # API y gestión básica de clientes
         from routes.productos import productos_bp  # Solo para API de búsqueda de productos
         
         # Registrar blueprints limitados
         app.register_blueprint(pedidos_bp, url_prefix='/pedidos')
         app.register_blueprint(api_clientes_bp)  # API de clientes
+        app.register_blueprint(clientes_bp, url_prefix='/clientes')  # Gestión básica de clientes
         
         # Registrar solo la ruta API de productos (no la gestión completa)
         @app.route('/productos/api/buscar')
