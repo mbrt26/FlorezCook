@@ -366,6 +366,7 @@ $(document).ready(function() {
             $('#numero_identificacion_cliente_ingresado_hidden').val(nit);
             
             $.get('/api/clientes/buscar', { nit: nit }, function(data) {
+                console.log('🔍 Respuesta API clientes:', data);
                 if (data.existe) {
                     // Cliente encontrado
                     const clienteInfo = `${data.nombre_comercial}<br>` +
@@ -393,6 +394,7 @@ $(document).ready(function() {
                     window.scrollTo(0, 0);
                 } else {
                     // Cliente no encontrado: redirigir a la página de creación de cliente
+                    console.log('🔍 Cliente no encontrado, redirigiendo...');
                     window.location.href = `/clientes/agregar?nit=${encodeURIComponent(nit)}&redirect_to=/pedidos/form`;
                 }
             }).always(function() {

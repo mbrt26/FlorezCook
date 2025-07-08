@@ -155,8 +155,15 @@ def create_cliente_app():
     @app.route('/clientes/agregar', methods=['GET', 'POST'])
     def agregar_cliente_directo():
         """Agregar cliente directamente (bypass blueprint)"""
-        from routes.clientes import agregar
-        return agregar()
+        logger.warning("🔍 RUTA DIRECTA AGREGAR CLIENTE - Ejecutando...")
+        try:
+            from routes.clientes import agregar
+            result = agregar()
+            logger.warning(f"🔍 RUTA DIRECTA AGREGAR CLIENTE - Resultado: {type(result)}")
+            return result
+        except Exception as e:
+            logger.warning(f"🔍 RUTA DIRECTA AGREGAR CLIENTE - Error: {e}")
+            return f"Error: {e}", 500
     
     # Página principal del portal de clientes
     @app.route('/')
