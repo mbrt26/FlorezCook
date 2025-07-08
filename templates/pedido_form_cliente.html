@@ -654,21 +654,26 @@ $(document).ready(function() {
         // Validación básica
         let errores = [];
         
-        // Verificar productos con debug mejorado
+        // Verificar productos con debug para móvil
         const productosHidden = $('.producto-id-hidden');
         const productosConValor = $('.producto-id-hidden').filter(function() {
             return $(this).val() !== '';
         });
         
-        console.log('🔍 DEBUG PRODUCTOS:');
-        console.log('- Total campos producto-id-hidden:', productosHidden.length);
-        console.log('- Campos con valor:', productosConValor.length);
+        // Debug visible para móvil
+        let debugInfo = `🔍 DEBUG PRODUCTOS:\n`;
+        debugInfo += `- Total campos: ${productosHidden.length}\n`;
+        debugInfo += `- Con valor: ${productosConValor.length}\n`;
         
         productosHidden.each(function(index) {
-            console.log(`- Campo ${index}:`, $(this).attr('name'), '=', $(this).val());
+            const name = $(this).attr('name') || 'sin-name';
+            const value = $(this).val() || 'vacío';
+            debugInfo += `- Campo ${index}: ${name} = ${value}\n`;
         });
         
         if (productosConValor.length === 0) {
+            // Mostrar debug antes del error
+            alert(debugInfo + '\n❌ ERROR: No se encontraron productos');
             errores.push('Debe agregar al menos un producto');
         }
         
