@@ -72,11 +72,14 @@ def form():
                 if form_data.get(key):
                     # Corregir la conversión de cantidad para manejar decimales
                     cantidad_raw = form_data.get(f'cantidad_{idx}', '0')
+                    logger.warning(f"🔍 DEBUG cantidad_{idx}: raw='{cantidad_raw}'")
                     try:
                         # Primero convertir a float para manejar decimales, luego a int
                         cantidad = int(float(cantidad_raw))
+                        logger.warning(f"🔍 DEBUG cantidad_{idx}: converted={cantidad}")
                     except (ValueError, TypeError):
                         cantidad = 0
+                        logger.warning(f"🔍 DEBUG cantidad_{idx}: error, set to 0")
                     
                     pedido_items.append({
                         'producto_id': int(form_data.get(f'producto_id_{idx}', 0)),
