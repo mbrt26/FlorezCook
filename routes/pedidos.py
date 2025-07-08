@@ -64,6 +64,11 @@ def form():
                 key = f'producto_id_{idx}'
                 if key not in form_data:
                     break
+                    
+                # DEBUG: Ver valores específicos
+                producto_val = form_data.get(key)
+                logger.warning(f"🔍 DEBUG idx {idx}: {key} = '{producto_val}'")
+                
                 if form_data.get(key):
                     # Corregir la conversión de cantidad para manejar decimales
                     cantidad_raw = form_data.get(f'cantidad_{idx}', '0')
