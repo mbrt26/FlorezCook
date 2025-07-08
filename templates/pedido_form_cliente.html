@@ -659,14 +659,16 @@ $(document).ready(function() {
             return $(this).val() !== '' && $(this).val() !== '0';
         });
         
-        // DEBUG: Verificar valores de cantidad antes del envío
-        let debugCantidades = '📊 DEBUG CANTIDADES:\n';
-        $('.cantidad-search').each(function(index) {
-            const name = $(this).attr('name') || 'sin-name';
-            const value = $(this).val() || 'vacío';
-            debugCantidades += `- ${name} = "${value}"\n`;
+        // CORREGIR: Eliminar campos duplicados antes del envío
+        $('.cantidad-search').each(function() {
+            const name = $(this).attr('name');
+            const value = $(this).val();
+            
+            // Si hay múltiples campos con el mismo name, mantener solo el que tiene valor
+            if (name && value) {
+                $(`input[name="${name}"]`).not(this).remove();
+            }
         });
-        alert(debugCantidades);
         
         if (productosConValor.length === 0) {
             errores.push('Debe agregar al menos un producto');
