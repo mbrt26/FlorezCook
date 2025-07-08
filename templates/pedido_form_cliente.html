@@ -660,7 +660,7 @@ $(document).ready(function() {
             return $(this).val() !== '';
         });
         
-        // Debug visible para móvil
+        // Debug visible para móvil - SIEMPRE mostrar
         let debugInfo = `🔍 DEBUG PRODUCTOS:\n`;
         debugInfo += `- Total campos: ${productosHidden.length}\n`;
         debugInfo += `- Con valor: ${productosConValor.length}\n`;
@@ -671,9 +671,10 @@ $(document).ready(function() {
             debugInfo += `- Campo ${index}: ${name} = ${value}\n`;
         });
         
+        // SIEMPRE mostrar debug al enviar
+        alert(debugInfo);
+        
         if (productosConValor.length === 0) {
-            // Mostrar debug antes del error
-            alert(debugInfo + '\n❌ ERROR: No se encontraron productos');
             errores.push('Debe agregar al menos un producto');
         }
         
