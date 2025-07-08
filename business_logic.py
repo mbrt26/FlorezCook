@@ -277,6 +277,13 @@ def validar_datos_pedido(form_data: dict) -> list:
             errors.append("El departamento de entrega es obligatorio para Domicilio.")
 
     pedido_items = form_data.get('pedido_items', [])
+    
+    # DEBUG TEMPORAL: Ver qué datos llegan
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"🔍 DEBUG PEDIDO_ITEMS: {pedido_items}")
+    logger.warning(f"🔍 DEBUG FORM_DATA keys: {list(form_data.keys())}")
+    
     if not pedido_items:
         errors.append("Debe agregar al menos un producto al pedido.")
     else:
