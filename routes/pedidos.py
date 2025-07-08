@@ -53,8 +53,6 @@ def form():
         )
         template_name = 'pedido_form_cliente.html' if is_cliente_portal else 'pedido_form.html'
         
-        # Log para debugging (TEMPORAL: forzado para diagnosticar)
-        logger.warning(f"🔍 PEDIDOS TEMPLATE DEBUG - is_cliente_portal: {is_cliente_portal}, template: {template_name}, host: {request.host}, g: {hasattr(g, 'is_cliente_portal')}, config: {current_app.config.get('IS_CLIENTE_PORTAL', False)}")
 
         if request.method == 'POST':
             form_data = dict(request.form)
@@ -65,21 +63,14 @@ def form():
                 if key not in form_data:
                     break
                     
-                # DEBUG: Ver valores específicos
-                producto_val = form_data.get(key)
-                logger.warning(f"🔍 DEBUG idx {idx}: {key} = '{producto_val}'")
-                
                 if form_data.get(key):
                     # Corregir la conversión de cantidad para manejar decimales
                     cantidad_raw = form_data.get(f'cantidad_{idx}', '0')
-                    logger.warning(f"🔍 DEBUG cantidad_{idx}: raw='{cantidad_raw}'")
                     try:
                         # Primero convertir a float para manejar decimales, luego a int
                         cantidad = int(float(cantidad_raw))
-                        logger.warning(f"🔍 DEBUG cantidad_{idx}: converted={cantidad}")
                     except (ValueError, TypeError):
                         cantidad = 0
-                        logger.warning(f"🔍 DEBUG cantidad_{idx}: error, set to 0")
                     
                     pedido_items.append({
                         'producto_id': int(form_data.get(f'producto_id_{idx}', 0)),

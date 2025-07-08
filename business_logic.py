@@ -278,16 +278,6 @@ def validar_datos_pedido(form_data: dict) -> list:
 
     pedido_items = form_data.get('pedido_items', [])
     
-    # DEBUG TEMPORAL: Ver qué datos llegan
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.warning(f"🔍 DEBUG PEDIDO_ITEMS: {pedido_items}")
-    logger.warning(f"🔍 DEBUG FORM_DATA keys: {list(form_data.keys())}")
-    
-    # Debug específico de campos cantidad
-    cantidad_keys = [k for k in form_data.keys() if 'cantidad' in k]
-    for key in cantidad_keys:
-        logger.warning(f"🔍 DEBUG FORM_DATA['{key}'] = '{form_data[key]}'")
     
     if not pedido_items:
         errors.append("Debe agregar al menos un producto al pedido.")
