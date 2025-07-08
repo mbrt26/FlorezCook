@@ -57,6 +57,11 @@ def lista():
 @clientes_bp.route('/agregar', methods=['GET', 'POST'])
 def agregar():
     """Agregar nuevo cliente"""
+    # DEBUG: Log entrada a la función
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"🔍 AGREGAR CLIENTE - Método: {request.method}, Args: {dict(request.args)}")
+    
     db = db_config.get_session()
     try:
         current_year = get_current_year()
@@ -147,6 +152,9 @@ def agregar():
         # Detectar si estamos en el portal cliente para usar template correcto
         from flask import g
         template_name = 'cliente_form_cliente.html' if (hasattr(g, 'is_cliente_portal') and g.is_cliente_portal) else 'cliente_form.html'
+        
+        # DEBUG: Log antes de renderizar
+        logger.warning(f"🔍 AGREGAR CLIENTE - Template: {template_name}, NIT: {nit}, Redirect: {redirect_to}")
         
         # Renderizar el formulario (GET o si hay error en POST)
         return render_template(template_name, 
