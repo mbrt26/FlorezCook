@@ -805,7 +805,8 @@ $(document).ready(function() {
         // Mostrar solo código y referencia en el campo
         inputElement.val(`${codigo} - ${referencia}`);
         
-        inputElement.siblings('.producto-id-hidden').val(productId);
+        // Usar selector más específico en lugar de siblings
+        $(`input[name='producto_id_${index}']`).val(productId);
         
         $(`input[name='gramaje_g_item_${index}']`).val(gramaje);
         $(`input[name='grupo_item_${index}']`).val(grupo);
