@@ -32,10 +32,6 @@ def create_app():
     app = Flask(__name__)
     logger = logging.getLogger(__name__)
     
-    # Registrar filtros de template personalizados
-    from utils.template_filters import register_template_filters
-    register_template_filters(app)
-    
     # Variable para evitar logs duplicados
     is_production = os.getenv('ENV') == 'production' or os.getenv('GAE_ENV') == 'standard'
     

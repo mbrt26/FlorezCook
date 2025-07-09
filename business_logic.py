@@ -414,8 +414,8 @@ def guardar_pedido_completo(db: Session, form_data: dict) -> tuple:
                 producto_id=item_data.get('producto_id'),
                 fecha_pedido_item=fecha_pedido_item,  # AGREGADO: Columna faltante
                 cantidad=int(item_data.get('cantidad')),  # CAMBIADO: De float a int
-                gramaje_g_item=float(item_data.get('gramaje_g_item')),
-                peso_total_g_item=float(item_data.get('peso_total_g_item')),
+                gramaje_g_item=float(item_data.get('gramaje_g_item') or 0),
+                peso_total_g_item=float(item_data.get('peso_total_g_item') or 0),
                 grupo_item=item_data.get('grupo_item'),
                 linea_item=item_data.get('linea_item'),
                 comentarios_item=item_data.get('comentarios_item'),  # CAMBIADO: De observaciones_item a comentarios_item
