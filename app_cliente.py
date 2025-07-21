@@ -340,7 +340,8 @@ def create_cliente_app():
         blocked_paths = [
             '/admin', '/dashboard', '/reportes', '/indicadores',
             '/productos/agregar', '/productos/editar', '/productos/eliminar',
-            '/clientes/lista', '/clientes/agregar', '/clientes/editar'
+            '/clientes/lista', '/clientes/editar', '/clientes/eliminar'
+            # NOTA: /clientes/agregar NO está bloqueado para permitir registro de nuevos clientes
         ]
         
         for blocked_path in blocked_paths:
